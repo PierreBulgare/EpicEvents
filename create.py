@@ -11,6 +11,8 @@ from jwt_utils import verifier_token, verifier_role
 
 
 
+
+
 # Chargement de l'environnement
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -118,15 +120,11 @@ def new_contrat(client_id):
         montant_total=montant_total,
         montant_restant=montant_total,
         date_creation=datetime.now(),
-        statut_signe=True,
         contact_gestion=session.query(Collaborateur).filter_by(id=payload["user_id"]).first()
     )
     session.add(contrat)
     session.commit()
     print(f"Contrat créé avec succès pour le client '{client.nom_complet}'.")
-
-
-def create_evenement()
 
 
 if __name__ == "__main__":
