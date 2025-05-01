@@ -9,6 +9,6 @@ def hash_password(password: str) -> str:
 # Vérifier un mot de passe (convertir en bytes avant vérification)
 def verify_password(password: str, hashed) -> bool:
     if isinstance(hashed, str):
-        hashed = hashed.encode('utf-8')  # encodage uniquement si c'est une string
+        hashed = hashed.encode('utf-8')
     return bcrypt.checkpw(password.encode('utf-8'), hashed)
 
