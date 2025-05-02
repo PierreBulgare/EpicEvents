@@ -4,11 +4,14 @@ from jwt_utils import token_valid
 import uuid
 import questionary
 from .text import TextManager
-from .message import MessageManager
+from .success_message import SuccessMessage
+from .error_message import ErrorMessage
+from .warning_message import WarningMessage
 from .database import DatabaseManager
 from .user import UserManager
 import utils
 from settings import QUIT_APP_CHOICES
+
 
 class ClientManager:
     def __init__(self, db_manager: DatabaseManager, user: UserManager):
@@ -34,14 +37,14 @@ class ClientManager:
         with self.db_manager.session_scope() as session:
             if not client_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     client_email = input("Email du client à afficher : ").strip()
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
-                        MessageManager.data_not_found("Client", client_email)
+                        ErrorMessage.data_not_found("Client", client_email)
                         return
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
             
@@ -77,7 +80,7 @@ class ClientManager:
                     case "🔒 Quitter l'application (Avec Déconnexion)":
                         utils.quit_app(user_logout=True)
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
     def display_all_clients(self):
         if not token_valid(self.user):
@@ -86,7 +89,7 @@ class ClientManager:
         with self.db_manager.session_scope() as session:
             clients = session.query(Client).all()
             if not clients:
-                MessageManager.empty_table(Client.__tablename__)
+                ErrorMessage.empty_table(Client.__tablename__)
                 return
             
             width = 50
@@ -100,7 +103,7 @@ class ClientManager:
 
 
     def create_client(self):
-        MessageManager.cancel_command_info()
+        WarningMessage.cancel_command_info()
 
         if not token_valid(self.user):
             return
@@ -113,7 +116,7 @@ class ClientManager:
                 nom_entreprise = input("Nom de l'entreprise : ")
                 break
             except KeyboardInterrupt:
-                MessageManager.action_cancelled()
+                WarningMessage.action_cancelled()
                 return
 
         with self.db_manager.session_scope() as session:
@@ -128,7 +131,7 @@ class ClientManager:
             )
             session.add(client)
             session.commit()
-            self.display_client(client.id, MessageManager.create_success)
+            self.display_client(client.id, SuccessMessage.create_success)
 
     def update_client(self, client_id = None):
         if not token_valid(self.user):
@@ -137,15 +140,15 @@ class ClientManager:
         with self.db_manager.session_scope() as session:
             if not client_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     client_email = input("Email du client à modifier : ")
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
-                        MessageManager.data_not_found("Client", client_email)
+                        ErrorMessage.data_not_found("Client", client_email)
                         return
                     self.display_client_data(client)
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
@@ -217,12 +220,12 @@ class ClientManager:
                     case "Retour":
                         break
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
             client.derniere_maj = datetime.now()
             
             session.commit()
-            self.display_client(client.id, MessageManager.update_success)
+            self.display_client(client.id, SuccessMessage.update_success)
 
     def delete_client(self, client_id = None):
         if not token_valid(self.user):
@@ -231,15 +234,15 @@ class ClientManager:
         with self.db_manager.session_scope() as session:
             if not client_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     client_email = input("Email du client à supprimer : ")
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
-                        MessageManager.data_not_found("Client", client_email)
+                        ErrorMessage.data_not_found("Client", client_email)
                         return
                     self.display_client_data(client)
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
@@ -257,13 +260,13 @@ class ClientManager:
                     case "Oui":
                         break
                     case "Non":
-                        MessageManager.action_cancelled()
+                        WarningMessage.action_cancelled()
                         return
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
             
             # Suppression du client
             session.delete(client)
             session.commit()
             utils.new_screen(self.user)
-            MessageManager.delete_success()
+            SuccessMessage.delete_success()

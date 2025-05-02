@@ -3,7 +3,9 @@ from datetime import datetime
 from jwt_utils import token_valid
 import questionary
 from .text import TextManager
-from .message import MessageManager
+from .success_message import SuccessMessage
+from .error_message import ErrorMessage
+from .warning_message import WarningMessage
 from .database import DatabaseManager
 from .user import UserManager
 import utils
@@ -42,19 +44,19 @@ class EventManager:
         with self.db_manager.session_scope() as session:
             if not event_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info
                     event_id = input("ID de l'évènement à afficher : ").strip()
                     event = session.query(Evenement).filter_by(id=event_id).first()
                     if not event:
-                        MessageManager.data_not_found("Evenement", event_id)
+                        ErrorMessage.data_not_found("Evenement", event_id)
                         return
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 event = session.query(Evenement).filter_by(id=event_id).first()
                 if not event:
-                    MessageManager.data_not_found("Evenement", event_id)
+                    ErrorMessage.data_not_found("Evenement", event_id)
                     return
             
 
@@ -87,7 +89,7 @@ class EventManager:
                     case "🔒 Quitter l'application (Avec Déconnexion)":
                         utils.quit_app(user_logout=True)
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
     def display_all_events(self):
         utils.new_screen(self.user)
@@ -97,7 +99,7 @@ class EventManager:
         with self.db_manager.session_scope() as session:
             events = session.query(Evenement).order_by(Evenement.date_debut.asc()).all()
             if not events:
-                MessageManager.empty_table(Evenement.__tablename__)
+                ErrorMessage.empty_table(Evenement.__tablename__)
                 return
 
             width = 120
@@ -115,7 +117,7 @@ class EventManager:
             print("-" * width)
 
     def create_event(self):
-        MessageManager.cancel_command_info()
+        WarningMessage.cancel_command_info
 
         if not token_valid(self.user):
             return
@@ -127,7 +129,7 @@ class EventManager:
             lieu = input("Lieu de l'événement : ")
             attendees = input("Nombre de participants : ")
         except KeyboardInterrupt:
-            MessageManager.action_cancelled()
+            WarningMessage.action_cancelled()
             return
 
         
@@ -139,17 +141,17 @@ class EventManager:
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
-                        MessageManager.data_not_found("Client", client_email)
+                        ErrorMessage.data_not_found("Client", client_email)
                         return
                     if not contract:
-                        MessageManager.data_not_found("Contrat", contract_id)
+                        ErrorMessage.data_not_found("Contrat", contract_id)
                         return
                     if contract.client_id != client.id:
-                        MessageManager.contract_client_mismatch(contract_id, client)
+                        ErrorMessage.contract_client_mismatch(contract_id, client)
                         return
                     break
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
 
             # Création de l'événement
@@ -166,7 +168,7 @@ class EventManager:
             )
             session.add(event)
             session.commit()
-            MessageManager.create_success()
+            SuccessMessage.create_success()
             self.display_event(event.id)
 
     def update_event(self, event_id = None):
@@ -176,15 +178,15 @@ class EventManager:
         with self.db_manager.session_scope() as session:
             if not event_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info
                     event_id = input("ID de l'évènement à modifier : ").strip()
                     event = session.query(Evenement).filter_by(id=event_id).first()
                     if not event:
-                        MessageManager.data_not_found("Evenement", event_id)
+                        ErrorMessage.data_not_found("Evenement", event_id)
                         return
                     self.display_event_data(event)
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 event = session.query(Evenement).filter_by(id=event_id).first()
@@ -274,12 +276,12 @@ class EventManager:
                     case "Retour":
                         break
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
                         continue
 
             event.derniere_maj = datetime.now()
             session.commit()
-            MessageManager.update_success()
+            SuccessMessage.update_success()
             self.display_event(event.id)
 
     def delete_event(self, event_id = None):
@@ -289,15 +291,15 @@ class EventManager:
         with self.db_manager.session_scope() as session:
             if not event_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info
                     event_id = input("ID de l'évènement à supprimer : ").strip()
                     event = session.query(Evenement).filter_by(id=event_id).first()
                     if not event:
-                        MessageManager.data_not_found("Evenement", event_id)
+                        ErrorMessage.data_not_found("Evenement", event_id)
                         return
                     self.display_event_data(event)
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 event = session.query(Evenement).filter_by(id=event_id).first()
@@ -314,11 +316,11 @@ class EventManager:
                     case "Oui":
                         break
                     case "Non":
-                        MessageManager.action_cancelled()
+                        WarningMessage.action_cancelled()
                         return
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
             session.delete(event)
             session.commit()
-            MessageManager.delete_success()
+            SuccessMessage.delete_success()

@@ -7,7 +7,8 @@ import os
 from dotenv import load_dotenv
 from security import hash_password
 from models import Role
-from managers.message import MessageManager
+from managers.error_message import ErrorMessage
+from managers.success_message import SuccessMessage
 import pwinput
 from settings import ADMIN_PASSWORD
 
@@ -29,20 +30,20 @@ def create_account():
     # Vérification du rôle
     role = session.query(Role).filter_by(nom=role_nom).first()
     if not role:
-        MessageManager.invalid_role()
+        ErrorMessage.invalid_role()
         return
 
     # Vérification si l'email existe déjà
     collaborateur = session.query(Collaborateur).filter_by(email=email).first()
     if collaborateur:
-        MessageManager.account_already_exists()
+        ErrorMessage.account_already_exists()
         return
 
     # Création du collaborateur
     new_collaborateur = Collaborateur(email=email, password_hash=hash_password(password), nom=nom, role=role)
     session.add(new_collaborateur)
     session.commit()
-    MessageManager.account_created()
+    SuccessMessage.account_created()
 
 def login():
     delete_token()
@@ -57,20 +58,20 @@ def login():
 
         save_token(token)
     else:
-        MessageManager.invalid_credentials()
+        ErrorMessage.invalid_credentials()
 
 def login_admin():
     password = ""
     while not password:
         password = pwinput.pwinput(prompt=("Mot de passe (Administrateur): "))
         if not password:
-            MessageManager.admin_password_empty()
+            ErrorMessage.admin_password_empty()
         elif not verify_password(password, ADMIN_PASSWORD):
-            MessageManager.admin_password_incorrect()
+            ErrorMessage.admin_password_incorrect()
             password = ""
 
 
 def logout():
     if os.path.exists(TOKEN_PATH) and os.path.getsize(TOKEN_PATH) > 0:
         delete_token()
-        MessageManager.logout_success()
+        SuccessMessage.logout_success()

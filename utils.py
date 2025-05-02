@@ -1,7 +1,7 @@
 import os
 import sys
 from settings import APP_TITLE, APP_VERSION, AUTHOR
-from managers.message import MessageManager
+from managers.info_message import InfoMessage
 from auth import logout
 
 
@@ -15,7 +15,7 @@ def display_app_title(user, admin=False):
 
     if not admin:
         if hasattr(user, 'name'):
-            MessageManager.welcome_message(user)
+            InfoMessage.welcome_message(user)
     else:
         print("Bienvenue dans l'espace Administrateur !")
 
@@ -28,8 +28,9 @@ def new_screen(user, admin=False):
 def quit_app(user_logout=False):
     if user_logout:
         logout()
-    MessageManager.end_program()
+    InfoMessage.end_program()
     sys.exit(0)
+
 
 def init_sentry():
     import sentry_sdk

@@ -4,11 +4,14 @@ from jwt_utils import token_exist, token_valid
 import questionary
 import uuid
 from .text import TextManager
-from .message import MessageManager
+from .success_message import SuccessMessage
+from .error_message import ErrorMessage
+from .warning_message import WarningMessage
 from .database import DatabaseManager
 from .user import UserManager
 import utils
 from settings import QUIT_APP_CHOICES
+
 
 class ContractManager:
     def __init__(self, db_manager: DatabaseManager, user: UserManager):
@@ -41,14 +44,14 @@ class ContractManager:
         with self.db_manager.session_scope() as session:
             if not contract_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     contract_id = input("ID du contrat à afficher : ")
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     if not contract:
-                        MessageManager.data_not_found("Contrat", contract_id)
+                        ErrorMessage.data_not_found("Contrat", contract_id)
                         return
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
@@ -89,7 +92,7 @@ class ContractManager:
                     case "🔒 Quitter l'application (Avec Déconnexion)":
                         utils.quit_app(user_logout=True)
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
     def display_all_contracts(self):
         if not token_valid(self.user):
@@ -98,7 +101,7 @@ class ContractManager:
         with self.db_manager.session_scope() as session:
             contracts = session.query(Contrat).order_by(Contrat.date_creation.desc()).all()
             if not contracts:
-                MessageManager.empty_table(Contrat.__tablename__)
+                ErrorMessage.empty_table(Contrat.__tablename__)
                 return
 
             width = 120
@@ -120,7 +123,7 @@ class ContractManager:
 
 
     def create_contract(self):
-        MessageManager.cancel_command_info()
+        WarningMessage.cancel_command_info()
 
         if not token_valid(self.user):
             return
@@ -133,7 +136,7 @@ class ContractManager:
                 print("Montant total invalide. Veuillez entrer un nombre.")
                 continue
             except KeyboardInterrupt:
-                MessageManager.action_cancelled()
+                WarningMessage.action_cancelled()
                 return
         
         with self.db_manager.session_scope() as session:
@@ -142,11 +145,11 @@ class ContractManager:
                     client_email = input("Email du client : ")
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
-                        MessageManager.data_not_found("Client", client_email)
+                        ErrorMessage.data_not_found("Client", client_email)
                         continue
                     break
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
 
             # Création du contrat
@@ -160,7 +163,7 @@ class ContractManager:
             )
             session.add(contract)
             session.commit()
-            self.display_contract(contract.id, MessageManager.create_success)
+            self.display_contract(contract.id, SuccessMessage.create_success)
 
     def update_contract(self, contract_id = None):
         if not token_valid(self.user):
@@ -170,7 +173,7 @@ class ContractManager:
         with self.db_manager.session_scope() as session:
             if not contract_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     contract_id = input("ID du contrat à modifier : ")
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     if not contract:
@@ -178,7 +181,7 @@ class ContractManager:
                         return
                     self.display_contract_data(contract)
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
@@ -229,12 +232,12 @@ class ContractManager:
                     case "Retour":
                         break
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
             contract.derniere_maj = datetime.now()
 
             session.commit()
-            self.display_contract(contract.id, MessageManager.update_success)
+            self.display_contract(contract.id, SuccessMessage.update_success)
 
     def sign_contract(self, contract_id = None):
 
@@ -245,20 +248,20 @@ class ContractManager:
         with self.db_manager.session_scope() as session:
             if not contract_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     contract_id = input("ID du contrat à signer : ")
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     if not contract:
-                        MessageManager.data_not_found("Contrat", contract_id)
+                        ErrorMessage.data_not_found("Contrat", contract_id)
                         return
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
                 
             if contract.statut_signe:
-                MessageManager.contract_already_signed(contract.id)
+                ErrorMessage.contract_already_signed(contract.id)
                 return
 
 
@@ -267,7 +270,7 @@ class ContractManager:
             contract.statut_signe = True
             contract.derniere_maj = datetime.now()
             session.commit()
-            self.display_contract(contract.id, MessageManager.sign_success)
+            self.display_contract(contract.id, SuccessMessage.sign_success)
 
 
     def delete_contract(self, contract_id = None):
@@ -277,15 +280,15 @@ class ContractManager:
         with self.db_manager.session_scope() as session:
             if not contract_id:
                 try:
-                    MessageManager.cancel_command_info()
+                    WarningMessage.cancel_command_info()
                     contract_id = input("ID du contrat à supprimer : ")
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     if not contract:
-                        MessageManager.data_not_found("Contrat", contract_id)
+                        ErrorMessage.data_not_found("Contrat", contract_id)
                         return
                     self.display_contract_data(contract)
                 except KeyboardInterrupt:
-                    MessageManager.action_cancelled()
+                    WarningMessage.action_cancelled()
                     return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
@@ -302,13 +305,13 @@ class ContractManager:
                     case "Oui":
                         break
                     case "Non":
-                        MessageManager.action_cancelled()
+                        WarningMessage.action_cancelled()
                         return
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
 
             # Suppression du contrat
             session.delete(contract)
             session.commit()
             utils.new_screen(self.user)
-            MessageManager.delete_success()
+            SuccessMessage.delete_success()

@@ -3,7 +3,8 @@ import jwt
 import os
 from datetime import datetime, timedelta, timezone
 import sentry_sdk
-from managers.message import MessageManager
+from managers.error_message import ErrorMessage
+
 
 def create_token(user_id, user_name, user_role, expire_minutes=60):
     """
@@ -20,12 +21,14 @@ def create_token(user_id, user_name, user_role, expire_minutes=60):
 
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
 
+
 def delete_token():
     """
     Supprime le token JWT en vidant le fichier .token.
     """
     with open(TOKEN_PATH, "w") as f:
         f.truncate(0)
+
 
 def get_token():
     """
@@ -36,6 +39,7 @@ def get_token():
             return f.read().strip()
     return None
 
+
 def save_token(token):
     """
     Enregistre le token JWT dans le fichier .token.
@@ -43,6 +47,7 @@ def save_token(token):
     with open(TOKEN_PATH, "w") as f:
         f.write(token)
     print("Token enregistré avec succès !")
+
 
 def token_exist():
     """
@@ -71,13 +76,14 @@ def verifier_role(token, role):
         return True
     return False
 
+
 def token_valid(user):
     if not token_exist():
-        MessageManager.token_not_found()
+        ErrorMessage.token_not_found()
         return False
     
     if user.payload is None:
-        MessageManager.invalid_token()
+        ErrorMessage.invalid_token()
         return False
     
     return True

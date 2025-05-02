@@ -4,7 +4,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from contextlib import contextmanager
 from models import Base
-from .message import MessageManager
+from .success_message import SuccessMessage
+from .error_message import ErrorMessage
+from .warning_message import WarningMessage
 
 class DatabaseManager:
     def __init__(self):
@@ -27,14 +29,14 @@ class DatabaseManager:
         try:
             session.close()
         except SQLAlchemyError as e:
-            MessageManager.session_close_error(e)
+            ErrorMessage.session_close_error(e)
 
     def drop_all(self):
         """
         Supprime toutes les tables de la base de données.
         """
         Base.metadata.drop_all(self.engine)
-        MessageManager.tables_dropped()
+        SuccessMessage.tables_dropped()
 
     def create_all(self):
         """
@@ -46,7 +48,7 @@ class DatabaseManager:
         for table_name, table in Base.metadata.tables.items():
             if table_name not in existing_tables:
                 Base.metadata.create_all(self.engine, tables=[table])
-                MessageManager.table_created(table_name)
+                SuccessMessage.table_created(table_name)
                 table_updated += 1
             else:
                 existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
@@ -55,10 +57,10 @@ class DatabaseManager:
                         with self.engine.begin() as connection:
                             sql = f'ALTER TABLE {table_name} ADD COLUMN {column.name} {column.type.compile(dialect=self.engine.dialect)}'
                             connection.execute(text(sql))
-                            MessageManager.column_added(table_name, column.name)
+                            SuccessMessage.column_added(table_name, column.name)
                             table_updated += 1
         if table_updated == 0:
-            MessageManager.no_table_update()
+            WarningMessage.no_table_update()
 
     def check_table_exists(self, table_name):
         """
@@ -67,7 +69,7 @@ class DatabaseManager:
         inspector = inspect(self.engine)
         exist = inspector.has_table(table_name)
         if not exist:
-            MessageManager.table_not_found(table_name)
+            ErrorMessage.table_not_found(table_name)
             return False
         return True
 

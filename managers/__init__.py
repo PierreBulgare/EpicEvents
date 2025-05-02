@@ -7,4 +7,7 @@ from .role import RoleManager
 
 from .text import TextManager
 from .menu import MenuManager
-from .message import MessageManager
+from .error_message import ErrorMessageManager
+from .success_message import SuccessMessageManager
+from .info_message import InfoMessageManager
+from .warning_message import WarningMessageManager

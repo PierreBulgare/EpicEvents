@@ -4,7 +4,8 @@ import questionary
 from jwt_utils import get_payload, get_token, token_exist
 from auth import login, create_account, logout
 from settings import QUIT_APP_CHOICES
-from .message import MessageManager
+from .success_message import SuccessMessage
+from .error_message import ErrorMessage
 from .role import RoleManager
 from .client import ClientManager
 from .contract import ContractManager
@@ -47,21 +48,18 @@ class MenuManager:
                         if payload:
                             self.user.init_user(token, payload)
                             break
-                        else:
-                            MessageManager.invalid_token()
-                            continue
                     case "📝 Créer un compte":
                         create_account()
                         continue
                     case "❌ Quitter l'application":
                         utils.quit_app()
                     case _:
-                        MessageManager.action_not_recognized()
+                        ErrorMessage.action_not_recognized()
         else:
             token = get_token()
             payload = get_payload(token)
             if payload is None:
-                MessageManager.invalid_token()
+                ErrorMessage.invalid_token()
                 login()
                 token = get_token()
                 payload = get_payload(token)
@@ -106,7 +104,7 @@ class MenuManager:
                 case "🔒 Quitter l'application (Avec Déconnexion)":
                     utils.quit_app(user_logout=True)
                 case _:
-                    MessageManager.action_not_recognized()
+                    ErrorMessage.action_not_recognized()
 
     def manage_clients(self):
         utils.new_screen(self.user)
@@ -151,7 +149,7 @@ class MenuManager:
                 case "🔒 Quitter l'application (Avec Déconnexion)":
                     utils.quit_app(user_logout=True)
                 case _:
-                    MessageManager.action_not_recognized()
+                    ErrorMessage.action_not_recognized()
 
     def manage_contract(self):
         utils.new_screen(self.user)
@@ -200,7 +198,7 @@ class MenuManager:
                 case "🔒 Quitter l'application (Avec Déconnexion)":
                     utils.quit_app(user_logout=True)
                 case _:
-                    MessageManager.action_not_recognized()
+                    ErrorMessage.action_not_recognized()
 
 
     def manage_events(self):
@@ -246,7 +244,7 @@ class MenuManager:
                 case "🔒 Quitter l'application (Avec Déconnexion)":
                     utils.quit_app(user_logout=True)
                 case _:
-                    MessageManager.action_not_recognized()
+                    ErrorMessage.action_not_recognized()
 
 
     def admin_menu(self):
@@ -285,4 +283,4 @@ class MenuManager:
                 case "Quitter l'application":
                     utils.quit_app()
                 case _:
-                    MessageManager.action_not_recognized()
+                    ErrorMessage.action_not_recognized()
