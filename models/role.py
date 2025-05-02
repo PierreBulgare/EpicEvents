@@ -8,4 +8,8 @@ class Role(Base):
     id = Column(Integer, primary_key=True)
     nom = Column(String(50), nullable=False, unique=True)
 
-    collaborateurs = relationship('Collaborateur', back_populates='role', foreign_keys='Collaborateur.role_id')
+    collaborateurs = relationship(
+        'Collaborateur',
+        back_populates='role',
+        foreign_keys='Collaborateur.role_id'
+        )

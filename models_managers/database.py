@@ -1,16 +1,16 @@
-from settings import DATABASE_URL
-from sqlalchemy import create_engine, inspect, text
+from app.settings import DATABASE_URL
+import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from contextlib import contextmanager
 from models import Base
-from .success_message import SuccessMessage
-from .error_message import ErrorMessage
-from .warning_message import WarningMessage
+from messages_managers.success import SuccessMessage
+from messages_managers.error import ErrorMessage
+from messages_managers.warning import WarningMessage
 
 class DatabaseManager:
     def __init__(self):
-        self.engine = create_engine(DATABASE_URL)
+        self.engine = sqlalchemy.create_engine(DATABASE_URL)
         self.Session = sessionmaker(bind=self.engine, autoflush=False, expire_on_commit=False)
 
     def get_engine(self):
@@ -42,7 +42,7 @@ class DatabaseManager:
         """
         Crée et met à jour toutes les tables de la base de données.
         """
-        inspector = inspect(self.engine)
+        inspector = sqlalchemy.inspect(self.engine)
         existing_tables = inspector.get_table_names()
         table_updated = 0
         for table_name, table in Base.metadata.tables.items():
@@ -56,7 +56,7 @@ class DatabaseManager:
                     if column.name not in existing_columns:
                         with self.engine.begin() as connection:
                             sql = f'ALTER TABLE {table_name} ADD COLUMN {column.name} {column.type.compile(dialect=self.engine.dialect)}'
-                            connection.execute(text(sql))
+                            connection.execute(sqlalchemy.text(sql))
                             SuccessMessage.column_added(table_name, column.name)
                             table_updated += 1
         if table_updated == 0:
@@ -66,7 +66,7 @@ class DatabaseManager:
         """
         Vérifie si une table existe dans la base de données.
         """
-        inspector = inspect(self.engine)
+        inspector = sqlalchemy.inspect(self.engine)
         exist = inspector.has_table(table_name)
         if not exist:
             ErrorMessage.table_not_found(table_name)

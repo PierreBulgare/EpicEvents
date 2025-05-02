@@ -1,4 +1,4 @@
-from colorama import Fore, Back, Style
+from colorama import init, Fore, Back, Style
 
 
 class TextManager:
@@ -30,14 +30,18 @@ class TextManager:
         "normal": Style.NORMAL,
     }
 
+    @staticmethod
+    def init_colorama():
+        init(autoreset=True)
+
     @classmethod
     def color(cls, text, color):
-        return f"{cls.color_map.get(color, Fore.WHITE)}{text}{Style.RESET_ALL}"
+        return f"{cls.color_map.get(color, Fore.WHITE)}{text}"
     
     @classmethod
     def background(cls, text, color):
-        return f"{cls.background_map.get(color, Back.RESET)}{text}{Style.RESET_ALL}"
+        return f"{cls.background_map.get(color, Back.RESET)}{text}"
 
     @classmethod
     def style(cls, text, style):
-        return f"{cls.style_map.get(style, Style.NORMAL)}{text}{Style.RESET_ALL}"
+        return f"{cls.style_map.get(style, Style.NORMAL)}{text}"

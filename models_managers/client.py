@@ -1,16 +1,15 @@
 from models import Client, Collaborateur
 from datetime import datetime
-from jwt_utils import token_valid
-import uuid
+from utils.jwt_utils import JWTManager
+from utils.utils import Utils
 import questionary
-from .text import TextManager
-from .success_message import SuccessMessage
-from .error_message import ErrorMessage
-from .warning_message import WarningMessage
+from messages_managers.text import TextManager
+from messages_managers.error import ErrorMessage
+from messages_managers.success import SuccessMessage
+from messages_managers.warning import WarningMessage
 from .database import DatabaseManager
 from .user import UserManager
-import utils
-from settings import QUIT_APP_CHOICES
+from app.settings import QUIT_APP_CHOICES
 
 
 class ClientManager:
@@ -19,7 +18,7 @@ class ClientManager:
         self.user = user
 
     def display_client_data(self, client: Client):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
         print(TextManager.style(TextManager.color("Informations du client".center(50), "blue"), "bold"))
         print(TextManager.color(f"{'Champ':<20} {'Valeur':<30}", "yellow"))
         print("-" * 50)
@@ -30,7 +29,7 @@ class ClientManager:
         print("-" * 50)
 
     def display_client(self, client_id = None, success_message = None):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
         
         
@@ -76,20 +75,20 @@ class ClientManager:
                     case "🔙 Retour":
                         break
                     case "❌ Quitter l'application (Sans Déconnexion)":
-                        utils.quit_app()
+                        Utils.quit_app()
                     case "🔒 Quitter l'application (Avec Déconnexion)":
-                        utils.quit_app(user_logout=True)
+                        Utils.quit_app(user_logout=True)
                     case _:
                         ErrorMessage.action_not_recognized()
 
     def display_all_clients(self):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
         
         with self.db_manager.session_scope() as session:
             clients = session.query(Client).all()
             if not clients:
-                ErrorMessage.empty_table(Client.__tablename__)
+                WarningMessage.empty_table(Client.__tablename__)
                 return
             
             width = 50
@@ -105,7 +104,7 @@ class ClientManager:
     def create_client(self):
         WarningMessage.cancel_command_info()
 
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
         
         while True:
@@ -127,14 +126,14 @@ class ClientManager:
                 nom_entreprise=nom_entreprise,
                 date_creation=datetime.now(),
                 derniere_maj=datetime.now(),
-                commercial=session.query(Collaborateur).filter_by(id=uuid.UUID(self.user.id)).first()
+                commercial=session.query(Collaborateur).filter_by(id=self.user.id).first()
             )
             session.add(client)
             session.commit()
             self.display_client(client.id, SuccessMessage.create_success)
 
     def update_client(self, client_id = None):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
 
         with self.db_manager.session_scope() as session:
@@ -228,7 +227,7 @@ class ClientManager:
             self.display_client(client.id, SuccessMessage.update_success)
 
     def delete_client(self, client_id = None):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
             
         with self.db_manager.session_scope() as session:
@@ -268,5 +267,5 @@ class ClientManager:
             # Suppression du client
             session.delete(client)
             session.commit()
-            utils.new_screen(self.user)
+            Utils.new_screen(self.user)
             SuccessMessage.delete_success()

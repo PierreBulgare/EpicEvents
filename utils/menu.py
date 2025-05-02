@@ -1,21 +1,18 @@
-import sys
-import utils
 import questionary
-from jwt_utils import get_payload, get_token, token_exist
-from auth import login, create_account, logout
-from settings import QUIT_APP_CHOICES
-from .success_message import SuccessMessage
-from .error_message import ErrorMessage
-from .role import RoleManager
-from .client import ClientManager
-from .contract import ContractManager
-from .event import EventManager
-from .user import UserManager
-from .database import DatabaseManager
+from .jwt_utils import JWTManager
+from .utils import Utils
+from .auth import AuthManager
+from app.settings import QUIT_APP_CHOICES
+from models_managers.database import DatabaseManager
+from models_managers.client import ClientManager
+from models_managers.contract import ContractManager
+from models_managers.event import EventManager
+from models_managers.role import RoleManager
+from messages_managers.error import ErrorMessage
 
 
 class MenuManager:
-    def __init__(self, db_manager: DatabaseManager, user:UserManager=None):
+    def __init__(self, db_manager: DatabaseManager, user=None):
         self.user = user
         self.db_manager = db_manager
         self.client_manager = ClientManager(db_manager, user)
@@ -23,7 +20,7 @@ class MenuManager:
         self.event_manager = EventManager(db_manager, user)
 
     def main_page(self):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
 
         choices = [
             "🔑 Se connecter",
@@ -31,7 +28,7 @@ class MenuManager:
             "❌ Quitter l'application"
             ]
 
-        if not token_exist():
+        if not JWTManager.token_exist():
             while True:
                 action = questionary.select(
                     "🔑 Connexion/Inscription",
@@ -42,27 +39,27 @@ class MenuManager:
 
                 match action:
                     case "🔑 Se connecter":
-                        login()
-                        token = get_token()
-                        payload = get_payload(token)
+                        AuthManager.login(self.db_manager)
+                        token = JWTManager.get_token()
+                        payload = JWTManager.get_payload(token)
                         if payload:
                             self.user.init_user(token, payload)
                             break
                     case "📝 Créer un compte":
-                        create_account()
+                        self.user.create_account(self.db_manager)
                         continue
                     case "❌ Quitter l'application":
-                        utils.quit_app()
+                        Utils.quit_app()
                     case _:
                         ErrorMessage.action_not_recognized()
         else:
-            token = get_token()
-            payload = get_payload(token)
+            token = JWTManager.get_token()
+            payload = JWTManager.get_payload(token)
             if payload is None:
                 ErrorMessage.invalid_token()
-                login()
-                token = get_token()
-                payload = get_payload(token)
+                AuthManager.login()
+                token = JWTManager.get_token()
+                payload = JWTManager.get_payload(token)
                 if payload:
                     self.user.init_user(token, payload)
             else:
@@ -70,7 +67,7 @@ class MenuManager:
 
 
     def main_menu(self):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
         
         choices = QUIT_APP_CHOICES.copy()
         if self.user.role == "Commercial":
@@ -100,14 +97,14 @@ class MenuManager:
                     self.manage_events()
                     continue
                 case "❌ Quitter l'application (Sans Déconnexion)":
-                    utils.quit_app()
+                    Utils.quit_app()
                 case "🔒 Quitter l'application (Avec Déconnexion)":
-                    utils.quit_app(user_logout=True)
+                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
 
     def manage_clients(self):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
 
         CHOICES = [
             "👤 Afficher tous les clients",
@@ -145,14 +142,14 @@ class MenuManager:
                 case "🔙 Retourner au menu principal":
                     break
                 case "❌ Quitter l'application (Sans Déconnexion)":
-                    utils.quit_app()
+                    Utils.quit_app()
                 case "🔒 Quitter l'application (Avec Déconnexion)":
-                    utils.quit_app(user_logout=True)
+                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
 
     def manage_contract(self):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
 
         CHOICES = [
             "🗂️  Afficher tous les contrats",
@@ -194,15 +191,15 @@ class MenuManager:
                 case "🔙 Retourner au menu principal":
                     break
                 case "❌ Quitter l'application (Sans Déconnexion)":
-                    utils.quit_app()
+                    Utils.quit_app()
                 case "🔒 Quitter l'application (Avec Déconnexion)":
-                    utils.quit_app(user_logout=True)
+                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
 
 
     def manage_events(self):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
 
         CHOICES = [
             "🗂️  Afficher tous les événements",
@@ -240,9 +237,9 @@ class MenuManager:
                 case "🔙 Retourner au menu principal":
                     break
                 case "❌ Quitter l'application (Sans Déconnexion)":
-                    utils.quit_app()
+                    Utils.quit_app()
                 case "🔒 Quitter l'application (Avec Déconnexion)":
-                    utils.quit_app(user_logout=True)
+                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
 
@@ -256,7 +253,7 @@ class MenuManager:
             - Créer les rôles
             - Supprimer les tables
         """
-        utils.new_screen(self.user, admin=True)
+        Utils.new_screen(self.user, admin=True)
 
         CHOICES = [
             "Créer ou mettre à jour les tables",
@@ -281,6 +278,6 @@ class MenuManager:
                 case "Supprimer les tables":
                     self.db_manager.drop_all()
                 case "Quitter l'application":
-                    utils.quit_app()
+                    Utils.quit_app()
                 case _:
                     ErrorMessage.action_not_recognized()

@@ -18,10 +18,29 @@ class Evenement(Base):
     derniere_maj = Column(DateTime, nullable=True)
 
     contrat_id = Column(UUID(as_uuid=True), ForeignKey('contrats.id'))
-    contrat = relationship('Contrat', back_populates='evenement', foreign_keys=[contrat_id])
+    contrat = relationship(
+        'Contrat',
+        back_populates='evenement',
+        foreign_keys=[contrat_id]
+        )
 
-    commercial_id = Column(UUID(as_uuid=True), ForeignKey('collaborateurs.id'))
-    commercial = relationship('Collaborateur', back_populates='evenements_commercial', foreign_keys=[commercial_id])
+    commercial_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey('collaborateurs.id')
+        )
+    commercial = relationship(
+        'Collaborateur',
+        back_populates='evenements_commercial',
+        foreign_keys=[commercial_id]
+        )
 
-    support_id = Column(UUID(as_uuid=True), ForeignKey('collaborateurs.id'), nullable=True)
-    support = relationship('Collaborateur', back_populates='evenements_support', foreign_keys=[support_id])
+    support_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey('collaborateurs.id'),
+        nullable=True
+        )
+    support = relationship(
+        'Collaborateur',
+        back_populates='evenements_support',
+        foreign_keys=[support_id]
+        )

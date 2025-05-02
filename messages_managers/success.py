@@ -40,6 +40,15 @@ class SuccessMessage():
             )
         )
 
+    @classmethod
+    def token_saved(cls):
+        print(
+            TextManager.color(
+                "Le token a été enregistré avec succès !",
+                cls.color
+            )
+        )
+
     """ Messages Base de données """
     @classmethod
     def table_created(cls, table_name):

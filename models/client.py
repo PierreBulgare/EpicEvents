@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -15,7 +15,18 @@ class Client(Base):
     date_creation = Column(DateTime)
     derniere_maj = Column(DateTime)
 
-    commercial_id = Column(UUID(as_uuid=True), ForeignKey('collaborateurs.id'))
-    commercial = relationship('Collaborateur', back_populates='clients', foreign_keys=[commercial_id])
+    commercial_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey('collaborateurs.id')
+        )
+    commercial = relationship(
+        'Collaborateur',
+        back_populates='clients',
+        foreign_keys=[commercial_id]
+        )
 
-    contrats = relationship('Contrat', back_populates='client', foreign_keys='Contrat.client_id')
+    contrats = relationship(
+        'Contrat',
+        back_populates='client',
+        foreign_keys='Contrat.client_id'
+        )

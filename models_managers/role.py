@@ -1,9 +1,8 @@
 from models import Role
 from .database import DatabaseManager
-from .success_message import SuccessMessage
-from .error_message import ErrorMessage
-from settings import ROLES
-
+from messages_managers.error import ErrorMessage
+from messages_managers.success import SuccessMessage
+from app.settings import ROLES
 
 class RoleManager:
     @staticmethod

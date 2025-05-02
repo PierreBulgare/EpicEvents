@@ -1,16 +1,15 @@
 from models import Client, Collaborateur, Contrat
 from datetime import datetime
-from jwt_utils import token_exist, token_valid
+from utils.jwt_utils import JWTManager
+from utils.utils import Utils
 import questionary
-import uuid
-from .text import TextManager
-from .success_message import SuccessMessage
-from .error_message import ErrorMessage
-from .warning_message import WarningMessage
+from messages_managers.text import TextManager
+from messages_managers.error import ErrorMessage
+from messages_managers.success import SuccessMessage
+from messages_managers.warning import WarningMessage
 from .database import DatabaseManager
 from .user import UserManager
-import utils
-from settings import QUIT_APP_CHOICES
+from app.settings import QUIT_APP_CHOICES
 
 
 class ContractManager:
@@ -19,7 +18,7 @@ class ContractManager:
         self.user = user
 
     def display_contract_data(self, contract: Contrat):
-        utils.new_screen(self.user)
+        Utils.new_screen(self.user)
         print(TextManager.style(TextManager.color("Informations du contrat".center(50), "blue"), "bold"))
         print(TextManager.color(f"{'Champ':<20} {'Valeur':<30}", "yellow"))
         print("-" * 50)
@@ -37,7 +36,7 @@ class ContractManager:
         print("-" * 50)
 
     def display_contract(self, contract_id = None, success_message = None):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
         
 
@@ -88,20 +87,20 @@ class ContractManager:
                     case "🔙 Retour":
                         break
                     case "❌ Quitter l'application (Sans Déconnexion)":
-                        utils.quit_app()
+                        Utils.quit_app()
                     case "🔒 Quitter l'application (Avec Déconnexion)":
-                        utils.quit_app(user_logout=True)
+                        Utils.quit_app(user_logout=True)
                     case _:
                         ErrorMessage.action_not_recognized()
 
     def display_all_contracts(self):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
 
         with self.db_manager.session_scope() as session:
             contracts = session.query(Contrat).order_by(Contrat.date_creation.desc()).all()
             if not contracts:
-                ErrorMessage.empty_table(Contrat.__tablename__)
+                WarningMessage.empty_table(Contrat.__tablename__)
                 return
 
             width = 120
@@ -125,7 +124,7 @@ class ContractManager:
     def create_contract(self):
         WarningMessage.cancel_command_info()
 
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
 
         while True:
@@ -166,7 +165,7 @@ class ContractManager:
             self.display_contract(contract.id, SuccessMessage.create_success)
 
     def update_contract(self, contract_id = None):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
 
         
@@ -241,7 +240,7 @@ class ContractManager:
 
     def sign_contract(self, contract_id = None):
 
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
 
         
@@ -274,7 +273,7 @@ class ContractManager:
 
 
     def delete_contract(self, contract_id = None):
-        if not token_valid(self.user):
+        if not JWTManager.token_valid(self.user):
             return
         
         with self.db_manager.session_scope() as session:
@@ -313,5 +312,5 @@ class ContractManager:
             # Suppression du contrat
             session.delete(contract)
             session.commit()
-            utils.new_screen(self.user)
+            Utils.new_screen(self.user)
             SuccessMessage.delete_success()

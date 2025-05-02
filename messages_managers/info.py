@@ -1,5 +1,5 @@
 from .text import TextManager
-from settings import APP_TITLE
+from app.settings import APP_TITLE
 
 
 class InfoMessage():

@@ -1,5 +1,5 @@
 from .text import TextManager
-from settings import ROLES
+from app.settings import ROLES
 
 
 class ErrorMessage():
@@ -95,6 +95,15 @@ class ErrorMessage():
             )
         )
 
+    @classmethod
+    def account_not_found(cls, email):
+        print(
+            TextManager.color(
+                f"Aucun compte trouvé avec l'email : {email}.",
+                cls.color
+            )
+        )
+
 
     @classmethod
     def data_not_found(cls, data_type, data_value):
@@ -182,7 +191,7 @@ class ErrorMessage():
     def invalid_role(cls):
         print(
             TextManager.color(
-                f"Rôle invalide. Veuillez choisir parmi : {', '.join(ROLES)}.",
+                f"Rôle invalide. Veuillez choisir parmi : {', '.join(ROLES)}",
                 cls.color
             )
         )
