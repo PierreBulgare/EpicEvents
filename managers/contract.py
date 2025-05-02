@@ -16,6 +16,7 @@ class ContractManager:
         self.user = user
 
     def display_contract_data(self, contract: Contrat):
+        utils.new_screen(self.user)
         print(TextManager.style(TextManager.color("Informations du contrat".center(50), "blue"), "bold"))
         print(TextManager.color(f"{'Champ':<20} {'Valeur':<30}", "yellow"))
         print("-" * 50)
@@ -32,13 +33,13 @@ class ContractManager:
         print(f"{'Dernière mise à jour':<20} {TextManager.style(contract.derniere_maj.strftime('%Y-%m-%d %H:%M'), 'dim'):<30}")
         print("-" * 50)
 
-    def display_contract(self, contract: Contrat = None):
+    def display_contract(self, contract_id = None, success_message = None):
         if not token_valid(self.user):
             return
         
 
         with self.db_manager.session_scope() as session:
-            if not contract:
+            if not contract_id:
                 try:
                     MessageManager.cancel_command_info()
                     contract_id = input("ID du contrat à afficher : ")
@@ -50,9 +51,12 @@ class ContractManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                contract = session.merge(contract)
+                contract = session.query(Contrat).filter_by(id=contract_id).first()
             
             self.display_contract_data(contract)
+            
+            if success_message:
+                success_message(contract_id)
 
             CHOICES = [
                 "✏️  Modifier",
@@ -70,13 +74,13 @@ class ContractManager:
 
                 match action:
                     case "✏️  Modifier":
-                        self.update_contract(contract)
+                        self.update_contract(contract.id)
                         break
                     case "🖊️  Signer":
-                        self.sign_contract(contract)
+                        self.sign_contract(contract.id)
                         continue
                     case "❌ Supprimer":
-                        self.delete_contract(contract)
+                        self.delete_contract(contract.id)
                         break
                     case "🔙 Retour":
                         break
@@ -100,7 +104,7 @@ class ContractManager:
             width = 120
             print(TextManager.style(TextManager.color("Liste des contrats".center(width), "blue"), "bold"))
             print("-" * width)
-            print(TextManager.color(f"{'ID':36} | {'Client':20} | {'Montant total':20} | {'Montant restant':20} | {'Signé ?':10}"), "yellow")
+            print(TextManager.color(f"{'ID':36} | {'Client':20} | {'Montant total':20} | {'Montant restant':20} | {'Signé ?':10}", "yellow"))
             print("-" * width)
             for contract in contracts:
                 id_str = TextManager.style(contract.id, 'dim')
@@ -156,17 +160,15 @@ class ContractManager:
             )
             session.add(contract)
             session.commit()
-            MessageManager.create_success()
-            self.display_contract(contract)
+            self.display_contract(contract.id, MessageManager.create_success)
 
-    def update_contract(self, contract: Contrat = None):
-
+    def update_contract(self, contract_id = None):
         if not token_valid(self.user):
             return
 
         
         with self.db_manager.session_scope() as session:
-            if not contract:
+            if not contract_id:
                 try:
                     MessageManager.cancel_command_info()
                     contract_id = input("ID du contrat à modifier : ")
@@ -179,13 +181,12 @@ class ContractManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                contract = session.merge(contract)
+                contract = session.query(Contrat).filter_by(id=contract_id).first()
                 
             CHOICES = [
                 "Montant total",
                 "Montant restant dû",
                 "Tout modifier",
-                "Valider",
                 "Retour"
             ]
 
@@ -204,12 +205,14 @@ class ContractManager:
                             default=str(contract.montant_total)
                         ).ask()
                         contract.montant_total = float(montant_total)
+                        break
                     case "Montant restant dû":
                         montant_restant = questionary.text(
                             "Montant restant dû:",
                             default=str(contract.montant_restant)
                         ).ask()
                         contract.montant_restant = float(montant_restant)
+                        break
                     case "Tout modifier":
                         montant_total = questionary.text(
                             f"Montant total :",
@@ -222,7 +225,6 @@ class ContractManager:
                             default=contract.montant_restant
                         ).ask()
                         contract.montant_restant = montant_restant
-                    case "Valider":
                         break
                     case "Retour":
                         break
@@ -232,16 +234,16 @@ class ContractManager:
             contract.derniere_maj = datetime.now()
 
             session.commit()
-            MessageManager.update_success()
+            self.display_contract(contract.id, MessageManager.update_success)
 
-    def sign_contract(self, contract: Contrat = None):
+    def sign_contract(self, contract_id = None):
 
         if not token_valid(self.user):
             return
 
         
         with self.db_manager.session_scope() as session:
-            if not contract:
+            if not contract_id:
                 try:
                     MessageManager.cancel_command_info()
                     contract_id = input("ID du contrat à signer : ")
@@ -253,7 +255,7 @@ class ContractManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                contract = session.merge(contract)
+                contract = session.query(Contrat).filter_by(id=contract_id).first()
                 
             if contract.statut_signe:
                 MessageManager.contract_already_signed(contract.id)
@@ -265,15 +267,15 @@ class ContractManager:
             contract.statut_signe = True
             contract.derniere_maj = datetime.now()
             session.commit()
-            MessageManager.sign_success(contract.id)
+            self.display_contract(contract.id, MessageManager.sign_success)
 
 
-    def delete_contract(self, contract: Contrat = None):
+    def delete_contract(self, contract_id = None):
         if not token_valid(self.user):
             return
         
         with self.db_manager.session_scope() as session:
-            if not contract:
+            if not contract_id:
                 try:
                     MessageManager.cancel_command_info()
                     contract_id = input("ID du contrat à supprimer : ")
@@ -286,7 +288,7 @@ class ContractManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                contract = session.merge(contract)
+                contract = session.query(Contrat).filter_by(id=contract_id).first()
                 
             while True:
                 confirmation = questionary.select(
@@ -308,4 +310,5 @@ class ContractManager:
             # Suppression du contrat
             session.delete(contract)
             session.commit()
+            utils.new_screen(self.user)
             MessageManager.delete_success()

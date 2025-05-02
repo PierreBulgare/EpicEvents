@@ -112,7 +112,7 @@ class MenuManager:
 
         CHOICES = [
             "👤 Afficher tous les clients",
-            "👤 Afficher les informations d'un client",
+            "👤 Afficher un client",
             "🆕 Ajouter un client",
             "✏️  Modifier un client",
             "❌ Supprimer un client",
@@ -131,7 +131,7 @@ class MenuManager:
                 case "👤 Afficher tous les clients":
                     self.client_manager.display_all_clients()
                     continue
-                case "👤 Afficher les informations d'un client":
+                case "👤 Afficher un client":
                     self.client_manager.display_client()
                     continue
                 case "🆕 Ajouter un client":

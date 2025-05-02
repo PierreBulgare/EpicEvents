@@ -15,6 +15,7 @@ class EventManager:
         self.user = user
 
     def display_event_data(self, event: Evenement):
+        utils.new_screen(self.user)
         width = 70
         print(TextManager.style(TextManager.color("Informations de l'évènement".center(width), "blue"), "bold"))
         print(TextManager.color(f"{'Champ':<30} {'Valeur':<30}", "yellow"))
@@ -34,12 +35,12 @@ class EventManager:
         print(f"{'Dernière mise à jour':<30} {TextManager.style(event.derniere_maj.strftime('%d-%m-%Y %H:%M'), 'dim'):<30}")
         print("-" * width)
 
-    def display_event(self, event: Evenement = None):
+    def display_event(self, event_id = None):
         if not token_valid(self.user):
             return
 
         with self.db_manager.session_scope() as session:
-            if not event:
+            if not event_id:
                 try:
                     MessageManager.cancel_command_info()
                     event_id = input("ID de l'évènement à afficher : ").strip()
@@ -51,8 +52,12 @@ class EventManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                event = session.merge(event)
+                event = session.query(Evenement).filter_by(id=event_id).first()
+                if not event:
+                    MessageManager.data_not_found("Evenement", event_id)
+                    return
             
+
             self.display_event_data(event)
 
             CHOICES = [
@@ -70,10 +75,10 @@ class EventManager:
 
                 match action:
                     case "✏️  Modifier":
-                        self.update_event(event)
+                        self.update_event(event.id)
                         break
                     case "❌ Supprimer":
-                        self.delete_event(event)
+                        self.delete_event(event.id)
                         break
                     case "🔙 Retour":
                         break
@@ -85,6 +90,7 @@ class EventManager:
                         MessageManager.action_not_recognized()
 
     def display_all_events(self):
+        utils.new_screen(self.user)
         if not token_valid(self.user):
             return
 
@@ -161,4 +167,158 @@ class EventManager:
             session.add(event)
             session.commit()
             MessageManager.create_success()
-            self.display_event(event)
+            self.display_event(event.id)
+
+    def update_event(self, event_id = None):
+        if not token_valid(self.user):
+            return
+
+        with self.db_manager.session_scope() as session:
+            if not event_id:
+                try:
+                    MessageManager.cancel_command_info()
+                    event_id = input("ID de l'évènement à modifier : ").strip()
+                    event = session.query(Evenement).filter_by(id=event_id).first()
+                    if not event:
+                        MessageManager.data_not_found("Evenement", event_id)
+                        return
+                    self.display_event_data(event)
+                except KeyboardInterrupt:
+                    MessageManager.action_cancelled()
+                    return
+            else:
+                event = session.query(Evenement).filter_by(id=event_id).first()
+
+            CHOICES = [
+                "Nom",
+                "Date de début",
+                "Date de fin",
+                "Lieu",
+                "Nombre de participants",
+                "Tout modifier",
+                "Retour"
+            ]
+
+            while True:
+                action = questionary.select(
+                    "Quel champ voulez-vous modifier ?",
+                    choices=CHOICES,
+                    use_shortcuts=True,
+                    instruction=" ",
+                ).ask()
+
+                match action:
+                    case "Nom":
+                        nom = questionary.text(
+                            "Nom : ",
+                            default=event.nom,
+                        ).ask()
+                        event.nom = nom
+                        break
+                    case "Date de début":
+                        date_debut = questionary.text(
+                            "Date de début (JJ-MM-AAAA) : ",
+                            default=event.date_debut.strftime("%d-%m-%Y"),
+                        ).ask()
+                        event.date_debut = datetime.strptime(date_debut, "%d-%m-%Y")
+                        break
+                    case "Date de fin":
+                        date_fin = questionary.text(
+                            "Date de fin (JJ-MM-AAAA) : ",
+                            default=event.date_fin.strftime("%d-%m-%Y"),
+                        ).ask()
+                        event.date_fin = datetime.strptime(date_fin, "%d-%m-%Y")
+                        break
+                    case "Lieu":
+                        lieu = questionary.text(
+                            "Lieu : ",
+                            default=event.lieu,
+                        ).ask()
+                        event.lieu = lieu
+                        break
+                    case "Nombre de participants":
+                        nombre_participants = questionary.text(
+                            "Nombre de participants : ",
+                            default=str(event.nombre_participants),
+                        ).ask()
+                        event.nombre_participants = int(nombre_participants)
+                        break
+                    case "Tout modifier":
+                        nom = questionary.text(
+                            "Nom : ",
+                            default=event.nom,
+                        ).ask()
+                        date_debut = questionary.text(
+                            "Date de début (JJ-MM-AAAA) : ",
+                            default=event.date_debut.strftime("%d-%m-%Y"),
+                        ).ask()
+                        date_fin = questionary.text(
+                            "Date de fin (JJ-MM-AAAA) : ",
+                            default=event.date_fin.strftime("%d-%m-%Y"),
+                        ).ask()
+                        lieu = questionary.text(
+                            "Lieu : ",
+                            default=event.lieu,
+                        ).ask()
+                        nombre_participants = questionary.text(
+                            "Nombre de participants : ",
+                            default=str(event.nombre_participants),
+                        ).ask()
+
+                        event.nom = nom
+                        event.date_debut = datetime.strptime(date_debut, "%d-%m-%Y")
+                        event.date_fin = datetime.strptime(date_fin, "%d-%m-%Y")
+                        event.lieu = lieu
+                        event.nombre_participants = int(nombre_participants)
+                        break
+                    case "Retour":
+                        break
+                    case _:
+                        MessageManager.action_not_recognized()
+                        continue
+
+            event.derniere_maj = datetime.now()
+            session.commit()
+            MessageManager.update_success()
+            self.display_event(event.id)
+
+    def delete_event(self, event_id = None):
+        if not token_valid(self.user):
+            return
+
+        with self.db_manager.session_scope() as session:
+            if not event_id:
+                try:
+                    MessageManager.cancel_command_info()
+                    event_id = input("ID de l'évènement à supprimer : ").strip()
+                    event = session.query(Evenement).filter_by(id=event_id).first()
+                    if not event:
+                        MessageManager.data_not_found("Evenement", event_id)
+                        return
+                    self.display_event_data(event)
+                except KeyboardInterrupt:
+                    MessageManager.action_cancelled()
+                    return
+            else:
+                event = session.query(Evenement).filter_by(id=event_id).first()
+
+            while True:
+                confirmation = questionary.select(
+                    f"Êtes-vous sûr de vouloir supprimer le contrat '{event.id}' ?",
+                    choices=["Oui", "Non"],
+                    use_shortcuts=True,
+                    instruction=" ",
+                ).ask()
+
+                match confirmation:
+                    case "Oui":
+                        break
+                    case "Non":
+                        MessageManager.action_cancelled()
+                        return
+                    case _:
+                        MessageManager.action_not_recognized()
+
+            session.delete(event)
+            session.commit()
+            MessageManager.delete_success()

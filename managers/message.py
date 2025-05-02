@@ -20,15 +20,15 @@ class MessageManager:
 
     # Messages de succès
     @classmethod
-    def create_success(cls):
+    def create_success(cls, *args):
         print(TextManager.color(f"Création effectuée avec succès !", cls.success_color))
 
     @classmethod
-    def update_success(cls):
+    def update_success(cls, *args):
         print(TextManager.color(f"Mise à jour effectuée avec succès !", cls.success_color))
 
     @classmethod
-    def delete_success(cls):
+    def delete_success(cls, *args):
         print(TextManager.color(f"Suppression effectuée avec succès !", cls.success_color))
 
     @classmethod

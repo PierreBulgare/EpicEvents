@@ -16,6 +16,7 @@ class ClientManager:
         self.user = user
 
     def display_client_data(self, client: Client):
+        utils.new_screen(self.user)
         print(TextManager.style(TextManager.color("Informations du client".center(50), "blue"), "bold"))
         print(TextManager.color(f"{'Champ':<20} {'Valeur':<30}", "yellow"))
         print("-" * 50)
@@ -25,18 +26,30 @@ class ClientManager:
         print(f"{'Nom de l\'entreprise':<20} {TextManager.style(client.nom_entreprise, 'dim'):<30}")
         print("-" * 50)
 
-    def display_client(self):
+    def display_client(self, client_id = None, success_message = None):
         if not token_valid(self.user):
             return
         
-        client_email = input("Email du client à afficher : ")
+        
         with self.db_manager.session_scope() as session:
-            client = session.query(Client).filter_by(email=client_email).first()
-            if not client:
-                MessageManager.data_not_found("Client", client_email)
-                return
+            if not client_id:
+                try:
+                    MessageManager.cancel_command_info()
+                    client_email = input("Email du client à afficher : ").strip()
+                    client = session.query(Client).filter_by(email=client_email).first()
+                    if not client:
+                        MessageManager.data_not_found("Client", client_email)
+                        return
+                except KeyboardInterrupt:
+                    MessageManager.action_cancelled()
+            else:
+                client = session.query(Client).filter_by(id=client_id).first()
             
             self.display_client_data(client)
+
+            if success_message:
+                success_message(client.nom_complet)
+            
             CHOICES = [
                 "✏️  Modifier",
                 "❌ Supprimer",
@@ -52,10 +65,10 @@ class ClientManager:
 
                 match action:
                     case "✏️  Modifier":
-                        self.update_client(client)
+                        self.update_client(client.id)
                         break
                     case "❌ Supprimer":
-                        self.delete_client(client)
+                        self.delete_client(client.id)
                         break
                     case "🔙 Retour":
                         break
@@ -91,14 +104,17 @@ class ClientManager:
 
         if not token_valid(self.user):
             return
-        try:
-            nom_complet = input("Nom complet : ")
-            email = input("Email : ")
-            telephone = input("Téléphone : ")
-            nom_entreprise = input("Nom de l'entreprise : ")
-        except KeyboardInterrupt:
-            MessageManager.action_cancelled()
-            return
+        
+        while True:
+            try:
+                nom_complet = input("Nom complet : ")
+                email = input("Email : ")
+                telephone = input("Téléphone : ")
+                nom_entreprise = input("Nom de l'entreprise : ")
+                break
+            except KeyboardInterrupt:
+                MessageManager.action_cancelled()
+                return
 
         with self.db_manager.session_scope() as session:
             client = Client(
@@ -112,14 +128,14 @@ class ClientManager:
             )
             session.add(client)
             session.commit()
-            MessageManager.create_success()
+            self.display_client(client.id, MessageManager.create_success)
 
-    def update_client(self, client: Client = None):
+    def update_client(self, client_id = None):
         if not token_valid(self.user):
             return
 
         with self.db_manager.session_scope() as session:
-            if not client:
+            if not client_id:
                 try:
                     MessageManager.cancel_command_info()
                     client_email = input("Email du client à modifier : ")
@@ -132,7 +148,7 @@ class ClientManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                client = session.merge(client)
+                client = session.query(Client).filter_by(id=client_id).first()
                 
             CHOICES = [
                 "Nom complet",
@@ -203,18 +219,17 @@ class ClientManager:
                     case _:
                         MessageManager.action_not_recognized()
 
-
             client.derniere_maj = datetime.now()
             
             session.commit()
-            MessageManager.update_success()
+            self.display_client(client.id, MessageManager.update_success)
 
-    def delete_client(self, client: Client = None):
+    def delete_client(self, client_id = None):
         if not token_valid(self.user):
             return
             
         with self.db_manager.session_scope() as session:
-            if not client:
+            if not client_id:
                 try:
                     MessageManager.cancel_command_info()
                     client_email = input("Email du client à supprimer : ")
@@ -227,7 +242,7 @@ class ClientManager:
                     MessageManager.action_cancelled()
                     return
             else:
-                client = session.merge(client)
+                client = session.query(Client).filter_by(id=client_id).first()
             
 
             while True:
@@ -250,4 +265,5 @@ class ClientManager:
             # Suppression du client
             session.delete(client)
             session.commit()
+            utils.new_screen(self.user)
             MessageManager.delete_success()
