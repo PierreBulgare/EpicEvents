@@ -8,7 +8,7 @@ from .auth import AuthManager
 class Utils:
     @staticmethod
     def display_app_title(user, admin=False):
-        width = 50
+        width = os.get_terminal_size().columns
         print("=" * width)
         print(f"{APP_TITLE:^{width}}")
         print(f"{'Version: ' + APP_VERSION:^{width}}")
