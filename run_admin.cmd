@@ -87,7 +87,7 @@ if %errorlevel% neq 0 (
 
 :: Lancer l'application
 echo Lancement de l'application...
-python run.py
+python run.py admin
 if %errorlevel% neq 0 (
     echo Échec du lancement de l'application.
     exit /b 1

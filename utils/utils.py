@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from app.settings import APP_TITLE, APP_VERSION, AUTHOR
 from messages_managers.info import InfoMessage
 from .auth import AuthManager
@@ -31,6 +32,7 @@ class Utils:
         if user_logout:
             AuthManager.logout()
         InfoMessage.end_program()
+        time.sleep(2)
         sys.exit(0)
 
     @staticmethod
