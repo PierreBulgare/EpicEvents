@@ -10,4 +10,9 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 TOKEN_PATH = os.path.join(os.path.dirname(__file__), ".token")
 APP_TITLE = "EPIC Events"
 APP_VERSION = "1.0.0"
-QUIT_APP_CHOICES = ["❌ Quitter l'application (Sans Déconnexion)", "🔒 Quitter l'application (Avec Déconnexion)"]
+AUTHOR = "Pierre BULGARE"
+QUIT_APP_CHOICES = [
+    "❌ Quitter l'application (Sans Déconnexion)",
+    "🔒 Quitter l'application (Avec Déconnexion)"
+    ]
+ROLES = ["Commercial", "Gestion", "Support"]

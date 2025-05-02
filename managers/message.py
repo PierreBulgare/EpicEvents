@@ -1,5 +1,5 @@
 from .text import TextManager
-from settings import APP_TITLE
+from settings import APP_TITLE, ROLES
 
 class MessageManager:
     error_color = "red"
@@ -68,8 +68,8 @@ class MessageManager:
     """ Messages Base de données"""
     # Messages de succès
     @classmethod
-    def tables_created(cls):
-        print(TextManager.color("Les tables ont été créées avec succès !", cls.success_color))
+    def table_created(cls, table_name):
+        print(TextManager.color(f"La table '{table_name}' a été créée avec succès !", cls.success_color))
 
     @classmethod
     def tables_dropped(cls):
@@ -92,6 +92,10 @@ class MessageManager:
     def session_close_error(cls, error):
         print(TextManager.color(f"Erreur lors de la fermeture de la session : {error}", cls.error_color))
 
+    @classmethod
+    def no_table_update(cls):
+        print(TextManager.color("Toutes les tables sont déjà à jour.", cls.warning_color))
+
     """ Messages Collaborateur"""
     # Message de succès
     @classmethod
@@ -102,10 +106,6 @@ class MessageManager:
     @classmethod
     def account_already_exists(cls):
         print(TextManager.color("Un compte avec cet email existe déjà.", cls.error_color))
-    
-    @classmethod
-    def invalid_role(cls):
-        print(TextManager.color("Rôle invalide. Veuillez choisir parmi : Commercial, Gestion, Support.", cls.error_color))
 
     @classmethod
     def invalid_credentials(cls):
@@ -129,6 +129,10 @@ class MessageManager:
     @classmethod
     def role_empty(cls):
         print(TextManager.color("Le nom du rôle ne peut pas être vide.", cls.error_color))
+
+    @classmethod
+    def invalid_role(cls):
+        print(TextManager.color(f"Rôle invalide. Veuillez choisir parmi : {', '.join(ROLES)}.", cls.error_color))
 
     """ Messages Contrat """
     # Messages de succès

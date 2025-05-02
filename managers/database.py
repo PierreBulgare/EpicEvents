@@ -42,10 +42,12 @@ class DatabaseManager:
         """
         inspector = inspect(self.engine)
         existing_tables = inspector.get_table_names()
+        table_updated = 0
         for table_name, table in Base.metadata.tables.items():
             if table_name not in existing_tables:
                 Base.metadata.create_all(self.engine, tables=[table])
                 MessageManager.table_created(table_name)
+                table_updated += 1
             else:
                 existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
                 for column in table.columns:
@@ -54,6 +56,9 @@ class DatabaseManager:
                             sql = f'ALTER TABLE {table_name} ADD COLUMN {column.name} {column.type.compile(dialect=self.engine.dialect)}'
                             connection.execute(text(sql))
                             MessageManager.column_added(table_name, column.name)
+                            table_updated += 1
+        if table_updated == 0:
+            MessageManager.no_table_update()
 
     def check_table_exists(self, table_name):
         """

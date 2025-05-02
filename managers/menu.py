@@ -10,10 +10,11 @@ from .client import ClientManager
 from .contract import ContractManager
 from .event import EventManager
 from .user import UserManager
+from .database import DatabaseManager
 
 
 class MenuManager:
-    def __init__(self, db_manager, user:UserManager=None):
+    def __init__(self, db_manager: DatabaseManager, user:UserManager=None):
         self.user = user
         self.db_manager = db_manager
         self.client_manager = ClientManager(db_manager, user)
@@ -249,18 +250,27 @@ class MenuManager:
 
 
     def admin_menu(self):
+        """
+        Menu d'administration
+
+        Actions disponibles:
+            - Créer ou mettre à jour les tables
+            - Créer les rôles
+            - Supprimer les tables
+        """
         utils.new_screen(self.user, admin=True)
 
-        role_manager = RoleManager(self.db_manager, self.user)
+        CHOICES = [
+            "Créer ou mettre à jour les tables",
+            "Créer un rôle",
+            "Supprimer les tables",
+            "Quitter l'application"
+        ]
+
         while True:
             action = questionary.select(
                 "Que voulez-vous faire ?",
-                choices=[
-                    "Créer ou mettre à jour les tables",
-                    "Créer un rôle",
-                    "Supprimer les tables",
-                    "Quitter l'application"
-                ],
+                choices=CHOICES,
                 use_shortcuts=True,
                 instruction=" ",
             ).ask()
@@ -269,11 +279,10 @@ class MenuManager:
                 case "Créer ou mettre à jour les tables":
                     self.db_manager.create_all()
                 case "Créer un rôle":
-                    role_manager.create_role()
+                    RoleManager.create_role(self.db_manager)
                 case "Supprimer les tables":
                     self.db_manager.drop_all()
                 case "Quitter l'application":
-                    print("Merci d'avoir utilisé l'application EPIC Events !")
-                    exit(0)
+                    utils.quit_app()
                 case _:
-                    print("Action non reconnue. Veuillez réessayer.")
+                    MessageManager.action_not_recognized()

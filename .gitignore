@@ -1,5 +1,7 @@
 venv/
+flake8-report/
 __pycache__
 .vscode/
 .env
 .token
+.flake8
