@@ -6,6 +6,60 @@ class ErrorMessage():
     color = "red"
 
     @classmethod
+    def invalid_email(cls):
+        print(
+            TextManager.color(
+                "L'email fourni est invalide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def email_empty(cls):
+        print(
+            TextManager.color(
+                "L'email ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def username_empty(cls):
+        print(
+            TextManager.color(
+                "Vous n'avez pas renseigné votre nom.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def user_firstname_empty(cls):
+        print(
+            TextManager.color(
+                "Vous n'avez pas renseigné votre prénom.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def password_empty(cls):
+        print(
+            TextManager.color(
+                "Le mot de passe ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def password_too_short(cls):
+        print(
+            TextManager.color(
+                "Le mot de passe doit contenir au moins 8 caractères.",
+                cls.color
+            )
+        )
+
+    @classmethod
     def invalid_token(cls):
         print(
             TextManager.color(
@@ -31,6 +85,16 @@ class ErrorMessage():
                 cls.color
             )
         )
+
+    @classmethod
+    def database_error(cls):
+        print(
+            TextManager.color(
+                "Erreur de base de données. Veuillez réessayer.",
+                cls.color
+            )
+        )
+
 
     @classmethod
     def data_not_found(cls, data_type, data_value):
