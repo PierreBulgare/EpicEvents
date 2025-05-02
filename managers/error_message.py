@@ -3,12 +3,14 @@ from settings import ROLES
 
 
 class ErrorMessage():
+    color = "red"
+
     @classmethod
     def invalid_token(cls):
         print(
             TextManager.color(
                 "Le token est invalide ou a expiré.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -17,7 +19,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Token introuvable. Vous devez vous connecter.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -26,7 +28,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Action non reconnue. Veuillez réessayer.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -36,7 +38,7 @@ class ErrorMessage():
             TextManager.color(
                 f"{data_type} '{data_value}' introuvable. "
                 "Veuillez vérifier les informations fournies.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -45,7 +47,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 f"La table '{table_name}' n'existe pas.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -54,7 +56,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Les tables existent déjà.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -63,7 +65,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 f"Erreur lors de la fermeture de la session : {error}",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -72,7 +74,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Un compte avec cet email existe déjà.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -81,7 +83,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Email ou mot de passe incorrect.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -90,7 +92,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 f"Rôle '{role_name}' introuvable.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -99,7 +101,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 f"Le rôle '{role_name}' existe déjà.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -108,7 +110,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Le nom du rôle ne peut pas être vide.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -117,7 +119,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 f"Rôle invalide. Veuillez choisir parmi : {', '.join(ROLES)}.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -126,7 +128,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 f"Le contrat {contract_id} a déjà été signé.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -136,7 +138,7 @@ class ErrorMessage():
             TextManager.color(
                 f"Le contrat {contract_id} n'appartient pas au client "
                 f"{client.nom_complet} ({client.id})",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -145,7 +147,7 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Le mot de passe ne peut pas être vide.",
-                cls.error_color
+                cls.color
             )
         )
 
@@ -154,6 +156,6 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Mot de passe incorrect. Veuillez réessayer.",
-                cls.error_color
+                cls.color
             )
         )
