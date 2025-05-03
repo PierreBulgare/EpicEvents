@@ -44,7 +44,10 @@ class ContractManager:
             if not contract_id:
                 try:
                     WarningMessage.cancel_command_info()
-                    contract_id = input("ID du contrat à afficher : ")
+                    contract_id = input("ID du contrat à afficher : ").strip()
+                    if not contract_id:
+                        ErrorMessage.id_empty()
+                        return
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     if not contract:
                         ErrorMessage.data_not_found("Contrat", contract_id)
@@ -129,10 +132,13 @@ class ContractManager:
 
         while True:
             try:
-                montant_total = float(input("Montant total : "))
+                montant_total = float(input("Montant total : ").strip())
+                if montant_total < 0:
+                    ErrorMessage.amount_negative()
+                    continue
                 break
             except ValueError:
-                print("Montant total invalide. Veuillez entrer un nombre.")
+                ErrorMessage.invalid_amount()
                 continue
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
@@ -141,7 +147,10 @@ class ContractManager:
         with self.db_manager.session_scope() as session:
             while True:
                 try:
-                    client_email = input("Email du client : ")
+                    client_email = input("Email du client : ").strip()
+                    if not client_email:
+                        ErrorMessage.email_empty()
+                        continue
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
                         ErrorMessage.data_not_found("Client", client_email)
@@ -170,25 +179,29 @@ class ContractManager:
 
         
         with self.db_manager.session_scope() as session:
+            WarningMessage.cancel_command_info()
             if not contract_id:
-                try:
-                    WarningMessage.cancel_command_info()
-                    contract_id = input("ID du contrat à modifier : ")
-                    contract = session.query(Contrat).filter_by(id=contract_id).first()
-                    if not contract:
-                        print(f"Le contrat avec l'ID '{contract_id}' n'existe pas.")
+                while True:
+                    try:
+                        contract_id = input("ID du contrat à modifier : ").strip()
+                        if not contract_id:
+                            ErrorMessage.id_empty()
+                            continue
+                        contract = session.query(Contrat).filter_by(id=contract_id).first()
+                        if not contract:
+                            print(f"Le contrat avec l'ID '{contract_id}' n'existe pas.")
+                            continue
+                        self.display_contract_data(contract)
+                        break
+                    except KeyboardInterrupt:
+                        WarningMessage.action_cancelled()
                         return
-                    self.display_contract_data(contract)
-                except KeyboardInterrupt:
-                    WarningMessage.action_cancelled()
-                    return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
                 
             CHOICES = [
                 "Montant total",
                 "Montant restant dû",
-                "Tout modifier",
                 "Retour"
             ]
 
@@ -202,32 +215,43 @@ class ContractManager:
 
                 match action:
                     case "Montant total":
-                        montant_total = questionary.text(
-                            "Montant total :",
-                            default=str(contract.montant_total)
-                        ).ask()
-                        contract.montant_total = float(montant_total)
-                        break
-                    case "Montant restant dû":
-                        montant_restant = questionary.text(
-                            "Montant restant dû:",
-                            default=str(contract.montant_restant)
-                        ).ask()
-                        contract.montant_restant = float(montant_restant)
-                        break
-                    case "Tout modifier":
-                        montant_total = questionary.text(
-                            f"Montant total :",
-                            default=contract.montant_total
-                        ).ask()
+                        current_montant_total = contract.montant_total
+                        while True:
+                            try:
+                                montant_total = questionary.text(
+                                    "Montant total : ",
+                                    default=str(contract.montant_total)
+                                ).ask()
+                                montant_total = float(montant_total)
+                                if montant_total < 0:
+                                    ErrorMessage.amount_negative()
+                                    continue
+                                break
+                            except ValueError:
+                                ErrorMessage.invalid_amount()
+                                continue
                         contract.montant_total = montant_total
-
-                        montant_restant = questionary.text(
-                            f"Montant restant dû:",
-                            default=contract.montant_restant
-                        ).ask()
+                        # Mise à jour du montant restant dû
+                        contract.montant_restant -= current_montant_total - montant_total
+                    case "Montant restant dû":
+                        while True:
+                            try:
+                                montant_restant = questionary.text(
+                                    "Montant restant dû: ",
+                                    default=str(contract.montant_restant)
+                                ).ask()
+                                montant_restant = float(montant_restant)
+                                if montant_total < 0:
+                                    ErrorMessage.amount_negative()
+                                    continue
+                                if montant_restant > contract.montant_total:
+                                    ErrorMessage.remaining_gt_total()
+                                    continue
+                                break
+                            except ValueError:
+                                ErrorMessage.invalid_amount()
+                                continue
                         contract.montant_restant = montant_restant
-                        break
                     case "Retour":
                         break
                     case _:
@@ -246,16 +270,21 @@ class ContractManager:
         
         with self.db_manager.session_scope() as session:
             if not contract_id:
-                try:
-                    WarningMessage.cancel_command_info()
-                    contract_id = input("ID du contrat à signer : ")
-                    contract = session.query(Contrat).filter_by(id=contract_id).first()
-                    if not contract:
-                        ErrorMessage.data_not_found("Contrat", contract_id)
+                WarningMessage.cancel_command_info()
+                while True:
+                    try:
+                        contract_id = input("ID du contrat à signer : ").strip()
+                        if not contract_id:
+                            ErrorMessage.id_empty()
+                            continue
+                        contract = session.query(Contrat).filter_by(id=contract_id).first()
+                        if not contract:
+                            ErrorMessage.data_not_found("Contrat", contract_id)
+                            continue
+                        break
+                    except KeyboardInterrupt:
+                        WarningMessage.action_cancelled()
                         return
-                except KeyboardInterrupt:
-                    WarningMessage.action_cancelled()
-                    return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
                 
@@ -280,7 +309,10 @@ class ContractManager:
             if not contract_id:
                 try:
                     WarningMessage.cancel_command_info()
-                    contract_id = input("ID du contrat à supprimer : ")
+                    contract_id = input("ID du contrat à supprimer : ").strip()
+                    if not contract_id:
+                        ErrorMessage.id_empty()
+                        return
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
                     if not contract:
                         ErrorMessage.data_not_found("Contrat", contract_id)

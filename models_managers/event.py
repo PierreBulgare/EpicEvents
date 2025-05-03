@@ -166,25 +166,111 @@ class EventManager:
                 date_fin = TextManager.style(
                     event.date_fin.strftime("%d-%m-%Y").ljust(20), "dim"
                 )
+                print(f"{id_str:36} | {nom} | {client} | {date_debut} | {date_fin}")
+            print("-" * width)
+        
+    def create_event(self):
+        if not JWTManager.token_valid(self.user):
+            return
+        
+        WarningMessage.cancel_command_info()
+
+        try:
+            while True:
+                nom = questionary.text(
+                    "Nom de l'évènement : ",
+                    default="",
+                ).ask()
+                if not nom:
+                    ErrorMessage.event_name_empty()
+                    continue
+                break
+            while True:
+                date_debut = questionary.text(
+                    "Date de début (JJ-MM-AAAA) : ",
+                    default="",
+                ).ask()
+                if not date_debut:
+                    ErrorMessage.event_start_date_empty()
+                    continue
+                try:
+                    datetime.strptime(date_debut, "%d-%m-%Y")
+                except ValueError:
+                    ErrorMessage.invalid_date_format()
+                    continue
+                break
+            while True:
+                date_fin = questionary.text(
+                    "Date de fin (JJ-MM-AAAA) : ",
+                    default="",
+                ).ask()
+                if not date_fin:
+                    ErrorMessage.event_end_date_empty()
+                    continue
+                try:
+                    datetime.strptime(date_fin, "%d-%m-%Y")
+                except ValueError:
+                    ErrorMessage.invalid_date_format()
+                    continue
+                break
+            while True:
+                lieu = questionary.text(
+                    "Lieu : ",
+                    default="",
+                ).ask()
+                if not lieu:
+                    ErrorMessage.event_location_empty()
+                    continue
+                break
+            while True:
+                attendees = questionary.text(
+                    "Nombre de participants : ",
+                    default="",
+                ).ask()
+                if not attendees:
+                    ErrorMessage.event_attendees_empty()
+                    continue
+                try:
+                    attendees = int(attendees)
+                    if attendees <= 0:
+                        ErrorMessage.invalid_attendees_number()
+                        continue
+                except ValueError:
+                    ErrorMessage.invalid_attendees_number()
+                    continue
+                break
+        except KeyboardInterrupt:
             WarningMessage.action_cancelled()
             return
+                
 
         with self.db_manager.session_scope() as session:
             while True:
                 try:
                     contract_id = input("ID du contrat : ")
-                    client_email = input("Email du client : ")
+                    if not contract_id:
+                        ErrorMessage.id_empty()
+                        continue
                     contract = session.query(Contrat).filter_by(id=contract_id).first()
+                    if not contract:
+                        ErrorMessage.data_not_found("Contrat", contract_id)
+                        continue
+
+                    client_email = input("Email du client : ")
+                    if not client_email:
+                        ErrorMessage.client_name_empty()
+                        continue
+                    if "@" not in client_email or "." not in client_email.split("@")[-1]:
+                        ErrorMessage.invalid_email()
+                        continue
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
                         ErrorMessage.data_not_found("Client", client_email)
-                        return
-                    if not contract:
-                        ErrorMessage.data_not_found("Contrat", contract_id)
-                        return
+                        continue
+    
                     if contract.client_id != client.id:
                         ErrorMessage.contract_client_mismatch(contract_id, client)
-                        return
+                        continue
                     break
                 except KeyboardInterrupt:
                     WarningMessage.action_cancelled()
@@ -208,25 +294,82 @@ class EventManager:
             SuccessMessage.create_success()
             self.display_event(event.id)
 
+    def assign_support(self, event_id=None):
+        if not JWTManager.token_valid(self.user):
+            return
+
+        with self.db_manager.session_scope() as session:
+            WarningMessage.cancel_command_info
+            if not event_id:
+                while True:
+                    try:
+                        event_id = input(
+                            "ID de l'évènement à modifier : ").strip()
+                        if not event_id:
+                            ErrorMessage.id_empty()
+                            continue
+                        event = session.query(Evenement
+                                            ).filter_by(id=event_id).first()
+                        if not event:
+                            ErrorMessage.data_not_found("Evenement", event_id)
+                            continue
+                        self.display_event_data(event)
+                    except KeyboardInterrupt:
+                        WarningMessage.action_cancelled()
+                        return
+            else:
+                event = session.query(Evenement
+                                      ).filter_by(id=event_id).first()
+
+            while True:
+                try:
+                    support_email = input("Email du contact support : ")
+                    if not support_email:
+                        ErrorMessage.client_name_empty()
+                        continue
+                    if "@" not in support_email or "." not in support_email.split("@")[-1]:
+                        ErrorMessage.invalid_email()
+                        continue
+                    support = session.query(Collaborateur).filter_by(email=support_email).first()
+                    if not support:
+                        ErrorMessage.data_not_found("Support", support_email)
+                        continue
+                    if support.role.nom != "Support":
+                        ErrorMessage.collab_role_mismatch(support.role.nom)
+                        continue
+                    break
+                except KeyboardInterrupt:
+                    WarningMessage.action_cancelled()
+                    return
+
+            event.support = support
+            session.commit()
+            SuccessMessage.update_success()
+            self.display_event(event.id)
+
     def update_event(self, event_id=None):
         if not JWTManager.token_valid(self.user):
             return
 
         with self.db_manager.session_scope() as session:
+            WarningMessage.cancel_command_info
             if not event_id:
-                try:
-                    WarningMessage.cancel_command_info
-                    event_id = input(
-                        "ID de l'évènement à modifier : ").strip()
-                    event = session.query(Evenement
-                                          ).filter_by(id=event_id).first()
-                    if not event:
-                        ErrorMessage.data_not_found("Evenement", event_id)
+                while True:
+                    try:
+                        event_id = input(
+                            "ID de l'évènement à modifier : ").strip()
+                        if not event_id:
+                            ErrorMessage.id_empty()
+                            continue
+                        event = session.query(Evenement
+                                            ).filter_by(id=event_id).first()
+                        if not event:
+                            ErrorMessage.data_not_found("Evenement", event_id)
+                            continue
+                        self.display_event_data(event)
+                    except KeyboardInterrupt:
+                        WarningMessage.action_cancelled()
                         return
-                    self.display_event_data(event)
-                except KeyboardInterrupt:
-                    WarningMessage.action_cancelled()
-                    return
             else:
                 event = session.query(Evenement
                                       ).filter_by(id=event_id).first()
@@ -240,6 +383,9 @@ class EventManager:
                 "Tout modifier",
                 "Retour",
             ]
+
+            if event.support:
+                CHOICES.insert(5, "Contact Support")
 
             while True:
                 action = questionary.select(
@@ -256,39 +402,105 @@ class EventManager:
                             default=event.nom,
                         ).ask()
                         event.nom = nom
-                        break
                     case "Date de début":
-                        date_debut = questionary.text(
-                            "Date de début (JJ-MM-AAAA) : ",
-                            default=event.date_debut.strftime("%d-%m-%Y"),
-                        ).ask()
+                        while True:
+                            date_debut = questionary.text(
+                                "Date de début (JJ-MM-AAAA) : ",
+                                default=event.date_debut.strftime("%d-%m-%Y"),
+                            ).ask()
+                            if not date_debut:
+                                ErrorMessage.event_start_date_empty()
+                                continue
+                            try:
+                                datetime.strptime(date_debut, "%d-%m-%Y")
+                            except ValueError:
+                                ErrorMessage.invalid_date_format()
+                                continue
+                            if datetime.strptime(date_debut, "%d-%m-%Y") < datetime.now():
+                                ErrorMessage.start_date_before_today()
+                                continue
+                            if datetime.strptime(date_debut, "%d-%m-%Y") > event.date_fin:
+                                ErrorMessage.start_date_after_end_date()
+                                continue
+                            break
                         event.date_debut = datetime.strptime(
                             date_debut, "%d-%m-%Y"
                             )
-                        break
                     case "Date de fin":
-                        date_fin = questionary.text(
-                            "Date de fin (JJ-MM-AAAA) : ",
-                            default=event.date_fin.strftime("%d-%m-%Y"),
-                        ).ask()
+                        while True:
+                            date_fin = questionary.text(
+                                "Date de fin (JJ-MM-AAAA) : ",
+                                default=event.date_fin.strftime("%d-%m-%Y"),
+                            ).ask()
+                            if not date_fin:
+                                ErrorMessage.event_end_date_empty()
+                                continue
+                            try:
+                                datetime.strptime(date_fin, "%d-%m-%Y")
+                            except ValueError:
+                                ErrorMessage.invalid_date_format()
+                                continue
+                            if datetime.strptime(date_fin, "%d-%m-%Y") < event.date_debut:
+                                ErrorMessage.end_date_before_start_date()
+                                continue
+                            if datetime.strptime(date_fin, "%d-%m-%Y") < datetime.now():
+                                ErrorMessage.end_date_before_today()
+                                continue
+                            break
                         event.date_fin = datetime.strptime(
                             date_fin, "%d-%m-%Y"
                             )
-                        break
                     case "Lieu":
-                        lieu = questionary.text(
-                            "Lieu : ",
-                            default=event.lieu,
-                        ).ask()
+                        while True:
+                            lieu = questionary.text(
+                                "Lieu : ",
+                                default=event.lieu,
+                            ).ask()
+                            if not lieu:
+                                ErrorMessage.event_location_empty()
+                                continue
+                            break
                         event.lieu = lieu
-                        break
                     case "Nombre de participants":
-                        nombre_participants = questionary.text(
-                            "Nombre de participants : ",
-                            default=str(event.nombre_participants),
-                        ).ask()
-                        event.nombre_participants = int(nombre_participants)
-                        break
+                        while True:
+                            nombre_participants = questionary.text(
+                                "Nombre de participants : ",
+                                default=str(event.nombre_participants),
+                            ).ask()
+                            if not nombre_participants:
+                                ErrorMessage.event_attendees_empty()
+                                continue
+                            try:
+                                nombre_participants = int(nombre_participants)
+                                if nombre_participants <= 0:
+                                    ErrorMessage.invalid_attendees_number()
+                                    continue
+                            except ValueError:
+                                ErrorMessage.invalid_attendees_number()
+                                continue
+                            break
+                        event.nombre_participants = nombre_participants
+                    case "Contact Support":
+                        while True:
+                            support_email = questionary.text(
+                                "Email du contact support : ",
+                                default=event.support.email,
+                            ).ask()
+                            if not support_email:
+                                ErrorMessage.client_name_empty()
+                                continue
+                            if "@" not in support_email or "." not in support_email.split("@")[-1]:
+                                ErrorMessage.invalid_email()
+                                continue
+                            support = session.query(Collaborateur).filter_by(email=support_email).first()
+                            if not support:
+                                ErrorMessage.data_not_found("Support", support_email)
+                                continue
+                            if support.role.nom != "Support":
+                                ErrorMessage.collab_role_mismatch(support.role.nom)
+                                continue
+                            break
+                        event.support = support
                     case "Tout modifier":
                         nom = questionary.text(
                             "Nom : ",
@@ -320,7 +532,6 @@ class EventManager:
                             )
                         event.lieu = lieu
                         event.nombre_participants = int(nombre_participants)
-                        break
                     case "Retour":
                         break
                     case _:

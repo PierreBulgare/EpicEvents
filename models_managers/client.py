@@ -38,12 +38,16 @@ class ClientManager:
                 try:
                     WarningMessage.cancel_command_info()
                     client_email = input("Email du client à afficher : ").strip()
+                    if not client_email:
+                        ErrorMessage.email_empty()
+                        return
                     client = session.query(Client).filter_by(email=client_email).first()
                     if not client:
                         ErrorMessage.data_not_found("Client", client_email)
                         return
                 except KeyboardInterrupt:
                     WarningMessage.action_cancelled()
+                    return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
             
@@ -82,6 +86,7 @@ class ClientManager:
                         ErrorMessage.action_not_recognized()
 
     def display_all_clients(self):
+        Utils.new_screen(self.user)
         if not JWTManager.token_valid(self.user):
             return
         
@@ -109,10 +114,19 @@ class ClientManager:
         
         while True:
             try:
-                nom_complet = input("Nom complet : ")
-                email = input("Email : ")
-                telephone = input("Téléphone : ")
-                nom_entreprise = input("Nom de l'entreprise : ")
+                nom_complet = input("Nom complet : ").strip()
+                if not nom_complet:
+                    ErrorMessage.client_name_empty()
+                    continue
+                email = input("Email : ").strip()
+                if not email:
+                    ErrorMessage.email_empty()
+                    continue
+                if "@" not in email or "." not in email.split("@")[-1]:
+                    ErrorMessage.invalid_email()
+                    continue
+                telephone = input("Téléphone (Facultatif) : ").strip()
+                nom_entreprise = input("Nom de l'entreprise (Facultatif): ").strip()
                 break
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
@@ -137,18 +151,22 @@ class ClientManager:
             return
 
         with self.db_manager.session_scope() as session:
+            WarningMessage.cancel_command_info()
             if not client_id:
-                try:
-                    WarningMessage.cancel_command_info()
-                    client_email = input("Email du client à modifier : ")
-                    client = session.query(Client).filter_by(email=client_email).first()
-                    if not client:
-                        ErrorMessage.data_not_found("Client", client_email)
+                while True:
+                    try:
+                        client_email = input("Email du client à modifier : ").strip()
+                        if not client_email:
+                            ErrorMessage.email_empty()
+                            continue
+                        client = session.query(Client).filter_by(email=client_email).first()
+                        if not client:
+                            ErrorMessage.data_not_found("Client", client_email)
+                            continue
+                        self.display_client_data(client)
+                    except KeyboardInterrupt:
+                        WarningMessage.action_cancelled()
                         return
-                    self.display_client_data(client)
-                except KeyboardInterrupt:
-                    WarningMessage.action_cancelled()
-                    return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
                 
@@ -171,48 +189,72 @@ class ClientManager:
 
                 match action:
                     case "Nom complet":
-                        nom_complet = questionary.text(
-                            f"Nom complet :",
-                            default=client.nom_complet
-                        ).ask()
+                        while True:
+                            nom_complet = questionary.text(
+                                f"Nom complet : ",
+                                default=client.nom_complet
+                            ).ask()
+                            if not nom_complet:
+                                ErrorMessage.client_name_empty()
+                                continue
+                            break
                         client.nom_complet = nom_complet
-                        break
                     case "Email":
-                        email = questionary.text(
-                            f"Email :",
-                            default=client.email
-                        ).ask()
+                        while True:
+                            email = questionary.text(
+                                f"Email : ",
+                                default=client.email
+                            ).ask()
+                            if not email:
+                                ErrorMessage.email_empty()
+                                continue
+                            if "@" not in email or "." not in email.split("@")[-1]:
+                                ErrorMessage.invalid_email()
+                                continue
+                            break
                         client.email = email
-                        break
                     case "Téléphone":
                         telephone = questionary.text(
-                            f"Téléphone :",
+                            f"Téléphone (Facultatif) : ",
                             default=client.telephone
                         ).ask()
                         client.telephone = telephone
                         break
                     case "Nom de l'entreprise":
                         nom_entreprise = questionary.text(
-                            f"Nom de l'entreprise :",
+                            f"Nom de l'entreprise (Facultatif) : ",
                             default=client.nom_entreprise
                         ).ask()
                         client.nom_entreprise = nom_entreprise
                         break
                     case "Tout modifier":
-                        nom_complet = questionary.text(
-                            "Nom complet :",
-                            default=client.nom_complet
-                        ).ask()
-                        email = questionary.text(
-                            "Email :",
-                            default=client.email
-                        ).ask()
+                        while True:
+                            nom_complet = questionary.text(
+                                f"Nom complet : ",
+                                default=client.nom_complet
+                            ).ask()
+                            if not nom_complet:
+                                ErrorMessage.client_name_empty()
+                                continue
+                            break
+                        while True:
+                            email = questionary.text(
+                                f"Email : ",
+                                default=client.email
+                            ).ask()
+                            if not email:
+                                ErrorMessage.email_empty()
+                                continue
+                            if "@" not in email or "." not in email.split("@")[-1]:
+                                ErrorMessage.invalid_email()
+                                continue
+                            break
                         telephone = questionary.text(
-                            "Téléphone :",
+                            "Téléphone (Facultatif) : ",
                             default=client.telephone
                         ).ask()
                         nom_entreprise = questionary.text(
-                            "Nom de l'entreprise :",
+                            "Nom de l'entreprise (Facultatif) : ",
                             default=client.nom_entreprise
                         ).ask()
                         break
@@ -231,18 +273,22 @@ class ClientManager:
             return
             
         with self.db_manager.session_scope() as session:
+            WarningMessage.cancel_command_info()
             if not client_id:
-                try:
-                    WarningMessage.cancel_command_info()
-                    client_email = input("Email du client à supprimer : ")
-                    client = session.query(Client).filter_by(email=client_email).first()
-                    if not client:
-                        ErrorMessage.data_not_found("Client", client_email)
+                while True:
+                    try:
+                        client_email = input("Email du client à supprimer : ").strip()
+                        if not client_email:
+                            ErrorMessage.email_empty()
+                            continue
+                        client = session.query(Client).filter_by(email=client_email).first()
+                        if not client:
+                            ErrorMessage.data_not_found("Client", client_email)
+                            continue
+                        self.display_client_data(client)
+                    except KeyboardInterrupt:
+                        WarningMessage.action_cancelled()
                         return
-                    self.display_client_data(client)
-                except KeyboardInterrupt:
-                    WarningMessage.action_cancelled()
-                    return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
             

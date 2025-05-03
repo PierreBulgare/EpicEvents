@@ -54,10 +54,13 @@ class DatabaseManager:
                 existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
                 for column in table.columns:
                     if column.name not in existing_columns:
+                        column_type = column.type.compile(dialect=self.engine.dialect)
+                        sql = f'ALTER TABLE {table_name} ADD COLUMN {column.name} {column_type}'
+                        
                         with self.engine.begin() as connection:
-                            sql = f'ALTER TABLE {table_name} ADD COLUMN {column.name} {column.type.compile(dialect=self.engine.dialect)}'
                             connection.execute(sqlalchemy.text(sql))
                             SuccessMessage.column_added(table_name, column.name)
+                            
                             table_updated += 1
         if table_updated == 0:
             WarningMessage.no_table_update()

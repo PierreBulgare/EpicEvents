@@ -13,10 +13,10 @@ class RoleManager:
             return
         
         while role_name not in ROLES:
-            print("Choisissez un rôle parmi les suivants :")
+            print("Choisissez un rôle parmi les suivants : ")
             for role in ROLES:
                 print(f"- {role}")
-            role_name = input("Nom du rôle: ").capitalize()
+            role_name = input("Nom du rôle : ").capitalize()
             if not role_name:
                 ErrorMessage.role_empty()
             elif role_name not in ROLES:

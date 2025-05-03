@@ -10,13 +10,16 @@ def main():
     command = sys.argv[1].lower()
     root_dir = os.path.dirname(os.path.abspath(__file__))
 
-    if command == "app":
-        subprocess.run([sys.executable, "app/app.py"], cwd=root_dir)
-    elif command == "admin":
-        subprocess.run([sys.executable, "app/admin.py"], cwd=root_dir)
-    else:
-        print("Invalid argument. Use 'app' or 'admin'.")
-        sys.exit(1)
+    try:
+        if command == "app":
+            subprocess.run([sys.executable, "app/app.py"], cwd=root_dir)
+        elif command == "admin":
+            subprocess.run([sys.executable, "app/admin.py"], cwd=root_dir)
+        else:
+            print("Invalid argument. Use 'app' or 'admin'.")
+            sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:

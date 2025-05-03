@@ -7,6 +7,7 @@ from .password_security import PasswordSecurity
 from messages_managers.error import ErrorMessage
 from messages_managers.success import SuccessMessage
 from models_managers.database import DatabaseManager
+from messages_managers.warning import WarningMessage
 from app.settings import ADMIN_PASSWORD
 
 
@@ -14,37 +15,42 @@ class AuthManager:
     @staticmethod
     def login(db_manager: DatabaseManager):
         JWTManager.delete_token()
+        WarningMessage.cancel_command_info()
 
         with db_manager.session_scope() as session:
+            try:
             # Email
-            while True:
-                email = input("Email : ")
-                if not email:
-                    ErrorMessage.email_empty()
-                    continue
-                if "@" not in email or "." not in email.split("@")[-1]:
-                    ErrorMessage.invalid_email()
-                    continue
-                try:
-                    collaborateur = session.query(Collaborateur
-                                                  ).filter_by(email=email
-                                                              ).first()
-                    if not collaborateur:
-                        ErrorMessage.account_not_found()
+                while True:
+                    email = input("Email : ")
+                    if not email:
+                        ErrorMessage.email_empty()
                         continue
-                except Exception as e:
-                    ErrorMessage.database_error()
-                    sentry_sdk.capture_exception(e)
-                    return
-                break
+                    if "@" not in email or "." not in email.split("@")[-1]:
+                        ErrorMessage.invalid_email()
+                        continue
+                    try:
+                        collaborateur = session.query(Collaborateur
+                                                    ).filter_by(email=email
+                                                                ).first()
+                        if not collaborateur:
+                            ErrorMessage.account_not_found()
+                            continue
+                    except Exception as e:
+                        ErrorMessage.database_error()
+                        sentry_sdk.capture_exception(e)
+                        return
+                    break
 
-            # Mot de passe
-            while True:
-                password = pwinput.pwinput(prompt="Mot de passe : ")
-                if not password:
-                    ErrorMessage.password_empty()
-                    continue
-                break
+                # Mot de passe
+                while True:
+                    password = pwinput.pwinput(prompt="Mot de passe : ")
+                    if not password:
+                        ErrorMessage.password_empty()
+                        continue
+                    break
+            except KeyboardInterrupt:
+                WarningMessage.action_cancelled()
+                return
 
             if (collaborateur
                 and PasswordSecurity.verify(
@@ -61,17 +67,22 @@ class AuthManager:
 
     @staticmethod
     def login_admin():
-        while True:
-            password = pwinput.pwinput(
-                prompt="Mot de passe (Administrateur): "
-                )
-            if not password:
-                ErrorMessage.admin_password_empty()
-                continue
-            if not PasswordSecurity.verify(password, ADMIN_PASSWORD):
-                ErrorMessage.admin_password_incorrect()
-                continue
-            break
+        WarningMessage.cancel_command_info()
+        try:
+            while True:
+                password = pwinput.pwinput(
+                    prompt="Mot de passe (Administrateur): "
+                    )
+                if not password:
+                    ErrorMessage.admin_password_empty()
+                    continue
+                if not PasswordSecurity.verify(password, ADMIN_PASSWORD):
+                    ErrorMessage.admin_password_incorrect()
+                    continue
+                break
+        except KeyboardInterrupt:
+            WarningMessage.action_cancelled()
+            return
 
     @staticmethod
     def logout():

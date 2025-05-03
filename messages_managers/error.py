@@ -216,6 +216,161 @@ class ErrorMessage():
         )
 
     @classmethod
+    def client_name_empty(cls):
+        print(
+            TextManager.color(
+                "Le nom du client ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def collab_role_mismatch(cls, name, role_name):
+        print(
+            TextManager.color(
+                f"Le collaborateur {name} ne fait pas partie du département '{role_name}'.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_name_empty(cls):
+        print(
+            TextManager.color(
+                "Le nom de l'événement ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_location_empty(cls):
+        print(
+            TextManager.color(
+                "Le lieu de l'événement ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_start_date_empty(cls):
+        print(
+            TextManager.color(
+                "La date de début de l'événement ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_end_date_empty(cls):
+        print(
+            TextManager.color(
+                "La date de fin de l'événement ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_attendees_empty(cls):
+        print(
+            TextManager.color(
+                "Le nombre de participants ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def invalid_date_format(cls):
+        print(
+            TextManager.color(
+                "Le format de la date est invalide. "
+                "Veuillez utiliser le format 'JJ-MM-AAAA'.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def end_date_before_start_date(cls):
+        print(
+            TextManager.color(
+                "La date de fin ne peut pas être antérieure à la date de début.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def end_date_before_today(cls):
+        print(
+            TextManager.color(
+                "La date de fin ne peut pas être antérieure à la date actuelle.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def start_date_before_today(cls):
+        print(
+            TextManager.color(
+                "La date de début ne peut pas être antérieure à la date actuelle.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def start_date_after_end_date(cls):
+        print(
+            TextManager.color(
+                "La date de début ne peut pas être postérieure à la date de fin.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def invalid_amount(cls):
+        print(
+            TextManager.color(
+                f"Le montant est invalide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def amount_negative(cls):
+        print(
+            TextManager.color(
+                f"Le montant ne peut pas être négatif.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def invalid_attendees_number(cls):
+        print(
+            TextManager.color(
+                f"Le nombre de participants est invalide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def remaining_gt_total(cls):
+        print(
+            TextManager.color(
+                f"Le montant restant dû ne peut pas être supérieur "
+                f"au montant total.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def id_empty(cls):
+        print(
+            TextManager.color(
+                "L'ID ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
     def admin_password_empty(cls):
         print(
             TextManager.color(

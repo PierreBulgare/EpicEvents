@@ -32,7 +32,7 @@ class Utils:
         if user_logout:
             AuthManager.logout()
         InfoMessage.end_program()
-        time.sleep(2)
+        time.sleep(1)
         sys.exit(0)
 
     @staticmethod

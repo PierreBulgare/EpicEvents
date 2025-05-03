@@ -57,7 +57,7 @@ class MenuManager:
             payload = JWTManager.get_payload(token)
             if payload is None:
                 ErrorMessage.invalid_token()
-                AuthManager.login()
+                AuthManager.login(self.db_manager)
                 token = JWTManager.get_token()
                 payload = JWTManager.get_payload(token)
                 if payload:
@@ -204,11 +204,18 @@ class MenuManager:
         CHOICES = [
             "🗂️  Afficher tous les événements",
             "🎫 Afficher un événement",
-            "🆕 Créer un événement",
-            "✏️  Modifier un événement",
-            "❌ Supprimer un événement",
             "🔙 Retourner au menu principal"
         ] + QUIT_APP_CHOICES
+
+        if self.user.role == "Commercial":
+            CHOICES.insert(2, "🆕 Créer un événement")
+            CHOICES.insert(3, "✏️  Modifier un événement")
+            CHOICES.insert(4, "❌ Supprimer un événement")
+        elif self.user.role == "Gestion":
+            CHOICES.insert(2, "✏️  Assigner un Contact Support")
+        elif self.user.role == "Support":
+            CHOICES.insert(2, "✏️  Modifier un événement")
+            CHOICES.insert(3, "❌ Supprimer un événement")
 
         while True:
             action = questionary.select(
@@ -230,6 +237,9 @@ class MenuManager:
                     continue
                 case "✏️  Modifier un événement":
                     self.event_manager.update_event()
+                    continue
+                case "✏️  Assigner un Contact Support":
+                    self.event_manager.assign_support()
                     continue
                 case "❌ Supprimer un événement":
                     self.event_manager.delete_event()
