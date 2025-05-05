@@ -94,6 +94,9 @@ class ClientManager:
 
             if not Permission.client_management(self.user.role):
                 return
+            
+            if str(client.commercial.id) != str(self.user.id):
+                return
 
             if success_message:
                 success_message(client.nom_complet)
@@ -233,6 +236,10 @@ class ClientManager:
                     return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
+            
+            if str(client.commercial.id) != str(self.user.id):
+                ErrorMessage.client_not_assigned_to_user(edit=True)
+                return
 
             choices = [
                 "Nom complet",
@@ -362,13 +369,16 @@ class ClientManager:
             return
 
         with self.db_manager.session_scope() as session:
-            WarningMessage.cancel_command_info()
             if not client_id:
-                client = ClientManager.get_client(session)
+                client = ClientManager.get_client(session, warning=True)
                 if not client:
                     return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
+
+            if str(client.commercial.id) != str(self.user.id):
+                ErrorMessage.client_not_assigned_to_user(delete=True)
+                return
 
             if not Utils.confirm_deletion():
                 return

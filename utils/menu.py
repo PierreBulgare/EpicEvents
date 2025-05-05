@@ -8,8 +8,8 @@ from models_managers.contract import ContractManager
 from models_managers.event import EventManager
 from models_managers.role import RoleManager
 from models_managers.user import UserManager
+from models_managers.collab import CollaborateurManager
 from messages_managers.error import ErrorMessage
-from messages_managers.text import TextManager
 from .permission import Permission
 
 
@@ -17,6 +17,7 @@ class MenuManager:
     def __init__(self, db_manager: DatabaseManager, user: UserManager=None):
         self.user = user
         self.db_manager = db_manager
+        self.collab_manager = CollaborateurManager(db_manager, user)
         self.client_manager = ClientManager(db_manager, user)
         self.contract_manager = ContractManager(db_manager, user)
         self.event_manager = EventManager(db_manager, user)
@@ -67,6 +68,9 @@ class MenuManager:
             "🎫 Événements"
         ] + QUIT_APP_CHOICES
 
+        if Permission.collab_management(self.user.role):
+            choices.insert(0, "👤 Collaborateurs")
+
         while True:
             if not JWTManager.token_exist():
                 break
@@ -76,6 +80,9 @@ class MenuManager:
             action = Utils.get_questionnary(choices)
 
             match action:
+                case "👤 Collaborateurs":
+                    self.manage_collabs()
+                    continue
                 case "👤 Clients":
                     self.manage_clients()
                     continue
@@ -85,6 +92,50 @@ class MenuManager:
                 case "🎫 Événements":
                     self.manage_events()
                     continue
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                    break
+                case "❌ Quitter l'application":
+                    Utils.quit_app()
+                case _:
+                    ErrorMessage.action_not_recognized()
+
+    def manage_collabs(self):
+        Utils.new_screen(self.user)
+
+        if not Permission.collab_management(self.user.role):
+            return
+        
+        choices = [
+            "👤 Afficher la liste des collaborateurs",
+            "👤 Afficher un collaborateur",
+            "🆕 Ajouter un collaborateur",
+            "✏️  Modifier un collaborateur",
+            "❌ Supprimer un collaborateur"
+        ] + [BACK_TO_MAIN_MENU] + QUIT_APP_CHOICES
+
+        while True:
+            Utils.display_menu_title("Menu Collaborateur")
+            action = Utils.get_questionnary(choices)
+
+            match action:
+                case "👤 Afficher la liste des collaborateurs":
+                    self.collab_manager.display_all_collabs()
+                    continue
+                case "👤 Afficher un collaborateur":
+                    self.collab_manager.display_collab()
+                    continue
+                case "🆕 Ajouter un collaborateur":
+                    self.collab_manager.create_collab()
+                    continue
+                case "✏️  Modifier un collaborateur":
+                    self.collab_manager.update_collab()
+                    continue
+                case "❌ Supprimer un collaborateur":
+                    self.collab_manager.delete_collab()
+                    continue
+                case "🔙 Retour au menu principal":
+                    break
                 case "🔒 Déconnexion":
                     AuthManager.logout()
                     break
@@ -160,7 +211,7 @@ class MenuManager:
 
             match action:
                 case "🗂️  Afficher la liste des contrats":
-                    self.contract_manager.display_all_contracts()
+                    self.contract_manager.display_all_contracts_menu()
                     continue
                 case "📜 Afficher un contrat":
                     self.contract_manager.display_contract()
@@ -216,7 +267,7 @@ class MenuManager:
 
             match action:
                 case "🗂️  Afficher la liste des événements":
-                    self.event_manager.display_all_events()
+                    self.event_manager.display_all_events_menu()
                     continue
                 case "🎫 Afficher un événement":
                     self.event_manager.display_event()

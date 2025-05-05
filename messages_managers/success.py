@@ -14,6 +14,15 @@ class SuccessMessage():
         )
 
     @classmethod
+    def collab_created(cls, name):
+        print(
+            TextManager.color(
+                f"Collaborateur {name} effectuée avec succès !",
+                cls.color
+            )
+        )
+
+    @classmethod
     def update_success(cls, *args):
         print(
             TextManager.color(

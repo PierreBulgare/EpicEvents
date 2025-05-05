@@ -95,15 +95,22 @@ class ContractManager:
             if not Permission.contract_management(self.user.role):
                 return
             
+            if (self.user.role == "Commercial"
+                and str(contract.client.commercial.id) != str(self.user.id)
+            ):
+                return
+
             if success_message:
                 success_message(contract_id)
 
             choices = [
                 "✏️  Modifier",
-                "🖊️  Signer",
                 "❌ Supprimer",
                 "🔙 Retour"
             ] + QUIT_APP_CHOICES
+
+            if Permission.sign_contract(self.user.role) and not contract.statut_signe:
+                choices.insert(0, "🖊️  Signer")
 
             while True:
                 action = Utils.get_questionnary(choices)
@@ -127,7 +134,50 @@ class ContractManager:
                     case _:
                         ErrorMessage.action_not_recognized()
 
-    def display_all_contracts(self):
+    def display_all_contracts_menu(self):
+        """
+        Affiche le menu de gestion des contrats.
+        """
+        if not JWTManager.token_valid(self.user):
+            return
+
+        if not Permission.contract_management(self.user.role):
+            return
+        
+        if self.user.role != "Commercial":
+            self.display_all_contracts()
+            return
+
+        choices = [
+            "📜 Liste des contrats (Tous)",
+            "📜 Liste des contrats (Non signés)",
+            "📜 Liste des contrats (Non entièrement réglés)",
+            "🔙 Retour"
+        ] + QUIT_APP_CHOICES
+
+        while True:
+            action = Utils.get_questionnary(choices)
+
+            match action:
+                case "📜 Liste des contrats (Tous)":
+                    self.display_all_contracts()
+                    break
+                case "📜 Liste des contrats (Non signés)":
+                    self.display_all_contracts(filter="statut_signe=False")
+                    break
+                case "📜 Liste des contrats (Non entièrement réglés)":
+                    self.display_all_contracts(filter="montant_restant>0")
+                    break
+                case "🔙 Retour":
+                    break
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                case "❌ Quitter l'application":
+                    Utils.quit_app()
+                case _:
+                    ErrorMessage.action_not_recognized()
+
+    def display_all_contracts(self, filter=None):
         """
         Affiche la liste de tous les contrats.
         """
@@ -137,18 +187,26 @@ class ContractManager:
             return
 
         with self.db_manager.session_scope() as session:
-            contracts = session.query(Contrat
-                                      ).order_by(Contrat.date_creation.desc()
-                                                 ).all()
-            if not contracts:
-                WarningMessage.empty_table(Contrat.__tablename__)
-                return
+            query = session.query(Contrat).order_by(Contrat.date_creation.desc())
+
+            title = "Liste des contrats"
+            if filter == "statut_signe=False":
+                query = query.filter(Contrat.statut_signe.is_(False))
+                title = "Liste des contrats (Non signés)"
+            elif filter == "montant_restant>0":
+                query = query.filter(Contrat.montant_restant > 0)
+                title = "Liste des contrats (Non entièrement réglés)"
+
+            contracts = query.all()
 
             width = 120
-            print(TextManager.style(TextManager.color("Liste des contrats".center(width), "blue"), "bold"))
+            print(TextManager.style(TextManager.color(title.center(width), "blue"), "bold"))
             print("-" * width)
             print(TextManager.color(f"{'ID':36} | {'Client':20} | {'Montant total':20} | {'Montant restant':20} | {'Signé ?':10}", "yellow"))
             print("-" * width)
+            if not contracts:
+                print(TextManager.color("Aucun contrat trouvé.", "red"))
+                return
             for contract in contracts:
                 id_str = TextManager.style(contract.id, 'dim')
                 client_str = TextManager.style(contract.client.nom_complet.ljust(20), 'dim')
@@ -171,7 +229,8 @@ class ContractManager:
         if not JWTManager.token_valid(self.user):
             return
         
-        if not Permission.contract_management(self.user.role):
+        if (not Permission.contract_management(self.user.role) and
+            self.user.role != "Commercial"):
             return
 
         while True:
@@ -227,6 +286,10 @@ class ContractManager:
                     return
             else:
                 contract = session.query(Contrat).filter_by(id=contract_id).first()
+
+            if str(contract.client.commercial.id) != str(self.user.id):
+                ErrorMessage.contract_not_assigned_to_user(edit=True)
+                return
                 
             choices = [
                 "Montant total",

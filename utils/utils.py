@@ -2,6 +2,8 @@ import os
 import sys
 from datetime import datetime
 import questionary
+import random
+import string
 from app.settings import APP_TITLE, APP_VERSION, AUTHOR
 from messages_managers.info import InfoMessage
 from messages_managers.text import TextManager
@@ -107,3 +109,12 @@ class Utils:
         print(TextManager.style(
                 TextManager.color(title, "magenta"),
                 "bold"))
+        
+    @staticmethod
+    def generate_password(length=8):
+        """
+        Génère un mot de passe aléatoire.
+        """
+        characters = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(random.sample(characters, length))
+        return password

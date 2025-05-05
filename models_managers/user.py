@@ -3,10 +3,12 @@ import pwinput
 from models import Collaborateur, Role
 from utils.jwt_utils import JWTManager
 from utils.password_security import PasswordSecurity
+from utils.utils import Utils
 from messages_managers.error import ErrorMessage
 from messages_managers.success import SuccessMessage
 from messages_managers.warning import WarningMessage
 from .database import DatabaseManager
+import slugify
 
 
 class UserManager:
@@ -46,62 +48,48 @@ class UserManager:
 
         with db_manager.session_scope() as session:
             try:
-                # Prénom
                 while True:
-                    prenom = input("Prénom : ")
-                    if not prenom:
-                        ErrorMessage.user_firstname_empty()
-                        continue
-                    break
+                    # Prénom
+                    while True:
+                        prenom = input("Prénom : ")
+                        if not prenom:
+                            ErrorMessage.user_firstname_empty()
+                            continue
+                        break
 
-                # Nom
-                while True:
-                    nom_de_famille = input("Nom : ")
-                    if not nom_de_famille:
-                        ErrorMessage.username_empty()
-                        continue
-                    nom = f"{prenom} {nom_de_famille.upper()}"
-                    break
+                    # Nom
+                    while True:
+                        nom_de_famille = input("Nom : ")
+                        if not nom_de_famille:
+                            ErrorMessage.username_empty()
+                            continue
+                        nom = f"{prenom.capitalize()} {nom_de_famille.upper()}"
+                        break
 
-                # Email
-                while True:
-                    email = input("Email : ")
-                    if not email:
-                        ErrorMessage.email_empty()
-                        continue
-                    if "@" not in email or "." not in email.split("@")[-1]:
-                        ErrorMessage.invalid_email()
-                        continue
-                    try:
-                        collaborateur = session.query(
-                            Collaborateur
-                        ).filter_by(email=email).first()
-                    except Exception as e:
-                        ErrorMessage.database_error()
-                        sentry_sdk.capture_exception(e)
-                        continue
-                    if collaborateur:
-                        ErrorMessage.account_already_exists()
+                    collab = session.query(Collaborateur
+                                            ).filter_by(nom=nom).first()
+                    if collab:
+                        ErrorMessage.collab_already_exists(nom)
                         continue
                     break
 
                 # Rôle
+                roles = session.query(Role).all()
+                role_choices = [role.nom for role in roles]
+                role_choices.append("Annuler")
+                
                 while True:
-                    role_nom = input(
-                        "Rôle (Commercial, Gestion, Support) : "
-                    ).capitalize()
-                    if not role_nom:
-                        ErrorMessage.role_empty()
-                        continue
-                    try:
-                        role = session.query(Role).filter_by(nom=role_nom).first()
-                    except Exception as e:
-                        ErrorMessage.database_error()
-                        sentry_sdk.capture_exception(e)
-                        continue
+                    role_name = Utils.get_questionnary(role_choices)
+                    if role_name == "Annuler":
+                        WarningMessage.action_cancelled()
+                        return
+                    
+                    role = session.query(Role).filter_by(nom=role_name).first()
+                    
                     if not role:
-                        ErrorMessage.invalid_role()
+                        ErrorMessage.data_not_found("Rôle", role_name)
                         continue
+                    
                     break
 
                 # Mot de passe
@@ -114,6 +102,9 @@ class UserManager:
                         ErrorMessage.password_too_short()
                         continue
                     break
+
+                # Email
+                email = f"{slugify.slugify(prenom)}.{slugify.slugify(nom_de_famille)}" + "@epicevents.com"
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
                 return

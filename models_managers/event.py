@@ -192,23 +192,66 @@ class EventManager:
                     case _:
                         ErrorMessage.action_not_recognized()
 
-    def display_all_events(self):
+    def display_all_events_menu(self):
+        """
+        Affiche le menu des évènements.
+        """
+        if not JWTManager.token_valid(self.user):
+            return
+        
+        if self.user.role != "Support":
+            self.display_all_events()
+            return
+
+        choices = [
+            "📜 Afficher mes Évènements",
+            "📜 Afficher tous les évènements",
+            "🔙 Retour"
+        ] + QUIT_APP_CHOICES
+
+        while True:
+            action = Utils.get_questionnary(choices)
+
+            match action:
+                case "📜 Afficher mes Évènements":
+                    self.display_all_events(filter="my_events")
+                    break
+                case "📜 Afficher tous les évènements":
+                    self.display_all_events()
+                    break
+                case "🔙 Retour":
+                    break
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                case "❌ Quitter l'application":
+                    Utils.quit_app()
+                case _:
+                    ErrorMessage.action_not_recognized()
+
+    def display_all_events(self, filter=None):
+        """
+        Affiche la liste de tous les évènements.
+        """
         Utils.new_screen(self.user)
+
         if not JWTManager.token_valid(self.user):
             return
 
         with self.db_manager.session_scope() as session:
-            events = session.query(Evenement).order_by(
+            query = session.query(Evenement).order_by(
                 Evenement.date_debut.asc()
-            ).all()
-            if not events:
-                WarningMessage.empty_table(Evenement.__tablename__)
-                return
+            )
+            title = "Liste des évènements"
+            if filter == "my_events":
+                query = query.filter(Evenement.support.has(id=self.user.id))
+                title = "Mes évènements"
+
+            events = query.all()
 
             width = 120
             print(
                 TextManager.style(
-                    TextManager.color("Liste des évènements".center(width), "blue"),
+                    TextManager.color(title.center(width), "blue"),
                     "bold",
                 )
             )
@@ -221,6 +264,9 @@ class EventManager:
                 )
             )
             print("-" * width)
+            if not events:
+                print(TextManager.style("Aucun évènement trouvé.", "dim"))
+                return
             for event in events:
                 id_str = TextManager.style(event.id, "dim")
                 nom = TextManager.style(event.nom.ljust(20), "dim")
@@ -248,69 +294,11 @@ class EventManager:
         - ID du contrat
         - Email du client
         """
-        WarningMessage.cancel_command_info()
 
         if not JWTManager.token_valid(self.user):
             return
         
         if not Permission.create_event(self.user.role):
-            return
-
-        try:
-            while True:
-                nom = input("Nom de l'évènement : ").strip()
-                if not nom:
-                    ErrorMessage.event_name_empty()
-                    continue
-                break
-            while True:
-                date_debut = input("Date de début (JJ-MM-AAAA) : ").strip()
-                if not date_debut:
-                    ErrorMessage.event_start_date_empty()
-                    continue
-                if not Utils.date_is_valid(date_debut):
-                    ErrorMessage.invalid_date_format()
-                    continue
-                date_debut = datetime.strptime(date_debut, "%d-%m-%Y")
-                if date_debut < datetime.now():
-                    ErrorMessage.start_date_before_today()
-                    continue
-                break
-            while True:
-                date_fin = input("Date de fin (JJ-MM-AAAA) : ").strip()
-                if not date_fin:
-                    ErrorMessage.event_end_date_empty()
-                    continue
-                if not Utils.date_is_valid(date_fin):
-                    ErrorMessage.invalid_date_format()
-                    continue
-                date_fin = datetime.strptime(date_fin, "%d-%m-%Y")
-                if date_fin < date_debut:
-                    ErrorMessage.end_date_before_start_date()
-                    continue
-                break
-            while True:
-                lieu = input("Lieu : ").strip()
-                if not lieu:
-                    ErrorMessage.event_location_empty()
-                    continue
-                break
-            while True:
-                attendees = input("Nombre de participants : ").strip()
-                if not attendees:
-                    ErrorMessage.event_attendees_empty()
-                    continue
-                try:
-                    attendees = int(attendees)
-                    if attendees <= 0:
-                        ErrorMessage.invalid_attendees_number()
-                        continue
-                except ValueError:
-                    ErrorMessage.invalid_attendees_number()
-                    continue
-                break
-        except KeyboardInterrupt:
-            WarningMessage.action_cancelled()
             return
                 
 
@@ -319,6 +307,12 @@ class EventManager:
                 contract = ContractManager.get_contract(session, warning=True)
                 if not contract:
                     return
+                if str(contract.client.commercial.id) != str(self.user.id):
+                    ErrorMessage.contract_not_assigned_to_user_to_create_event()
+                    continue
+                if not contract.statut_signe:
+                    ErrorMessage.contract_not_signed_for_event()
+                    continue
                 existing_event = session.query(Evenement
                                             ).filter_by(contrat=contract
                                                         ).first()
@@ -331,6 +325,63 @@ class EventManager:
                 return
             if contract.client != client:
                 ErrorMessage.contract_client_mismatch()
+                return
+            
+            try:
+                while True:
+                    nom = input("Nom de l'évènement : ").strip()
+                    if not nom:
+                        ErrorMessage.event_name_empty()
+                        continue
+                    break
+                while True:
+                    date_debut = input("Date de début (JJ-MM-AAAA) : ").strip()
+                    if not date_debut:
+                        ErrorMessage.event_start_date_empty()
+                        continue
+                    if not Utils.date_is_valid(date_debut):
+                        ErrorMessage.invalid_date_format()
+                        continue
+                    date_debut = datetime.strptime(date_debut, "%d-%m-%Y")
+                    if date_debut < datetime.now():
+                        ErrorMessage.start_date_before_today()
+                        continue
+                    break
+                while True:
+                    date_fin = input("Date de fin (JJ-MM-AAAA) : ").strip()
+                    if not date_fin:
+                        ErrorMessage.event_end_date_empty()
+                        continue
+                    if not Utils.date_is_valid(date_fin):
+                        ErrorMessage.invalid_date_format()
+                        continue
+                    date_fin = datetime.strptime(date_fin, "%d-%m-%Y")
+                    if date_fin < date_debut:
+                        ErrorMessage.end_date_before_start_date()
+                        continue
+                    break
+                while True:
+                    lieu = input("Lieu : ").strip()
+                    if not lieu:
+                        ErrorMessage.event_location_empty()
+                        continue
+                    break
+                while True:
+                    attendees = input("Nombre de participants : ").strip()
+                    if not attendees:
+                        ErrorMessage.event_attendees_empty()
+                        continue
+                    try:
+                        attendees = int(attendees)
+                        if attendees <= 0:
+                            ErrorMessage.invalid_attendees_number()
+                            continue
+                    except ValueError:
+                        ErrorMessage.invalid_attendees_number()
+                        continue
+                    break
+            except KeyboardInterrupt:
+                WarningMessage.action_cancelled()
                 return
 
             event = Evenement(

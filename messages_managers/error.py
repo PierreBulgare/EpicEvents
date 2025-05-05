@@ -24,10 +24,64 @@ class ErrorMessage():
         )
 
     @classmethod
+    def collab_already_exists(cls, name):
+        print(
+            TextManager.color(
+                f"Le collaborateur {name} existe déjà.",
+                cls.color
+            )
+        )
+
+    @classmethod
     def client_email_already_exists(cls, email):
         print(
             TextManager.color(
                 f"L'email {email} est déjà utilisé pour un autre client.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def client_not_assigned_to_user(cls, edit=False, delete=False):
+        if edit:
+            action = "modifier"
+        elif delete:
+            action = "supprimer"
+        print(
+            TextManager.color(
+                f"Vous devez être assigné à ce client pour le {action}.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def contract_not_assigned_to_user(cls, edit=False, delete=False):
+        if edit:
+            action = "modifier"
+        elif delete:
+            action = "supprimer"
+        print(
+            TextManager.color(
+                f"Ce contrat n'appartient pas à un client assigné à vous.\n"
+                f"Vous devez être assigné au client pour {action} le contrat.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def contract_not_assigned_to_user_to_create_event(cls):
+        print(
+            TextManager.color(
+                f"Vous devez être assigné au client lié à ce contrat pour créer un événement.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def contract_not_signed_for_event(cls):
+        print(
+            TextManager.color(
+                f"Le contrat n'est pas signé, vous ne pouvez pas encore créer d'évènement.",
                 cls.color
             )
         )
