@@ -41,7 +41,7 @@ class DatabaseManager:
         choices = ["Confirmer", "Annuler"]
         print(TextManager.color("ATTENTION : Cette action supprimera toutes les tables de la base de données !", "yellow"))
         while True:
-            answer = Utils.get_questionnary(choices).ask()
+            answer = Utils.get_questionnary(choices)
             match answer:
                 case "Confirmer":
                     break

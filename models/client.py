@@ -12,12 +12,13 @@ class Client(Base):
     email = Column(String(100), unique=True, nullable=False)
     telephone = Column(String(50))
     nom_entreprise = Column(String(100))
-    date_creation = Column(DateTime)
+    date_creation = Column(DateTime, nullable=False)
     derniere_maj = Column(DateTime)
 
     commercial_id = Column(
         UUID(as_uuid=True),
-        ForeignKey('collaborateurs.id')
+        ForeignKey('collaborateurs.id'),
+        nullable=False
         )
     commercial = relationship(
         'Collaborateur',

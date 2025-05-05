@@ -1,5 +1,6 @@
 venv/
 flake8-report/
+fake-passwords/
 __pycache__
 .vscode/
 .env

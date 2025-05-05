@@ -9,15 +9,15 @@ class Evenement(Base):
     __tablename__ = 'evenements'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     nom = Column(String(255), nullable=False)
-    date_debut = Column(DateTime)
-    date_fin = Column(DateTime)
-    lieu = Column(String(255))
-    nombre_participants = Column(Integer, default=0)
-    notes = Column(String, nullable=True)
-    date_creation = Column(DateTime)
-    derniere_maj = Column(DateTime, nullable=True)
+    date_debut = Column(DateTime, nullable=False)
+    date_fin = Column(DateTime, nullable=False)
+    lieu = Column(String(255), nullable=False)
+    nombre_participants = Column(Integer, nullable=False, default=1)
+    notes = Column(String)
+    date_creation = Column(DateTime, nullable=False)
+    derniere_maj = Column(DateTime)
 
-    contrat_id = Column(UUID(as_uuid=True), ForeignKey('contrats.id'))
+    contrat_id = Column(UUID(as_uuid=True), ForeignKey('contrats.id'), nullable=False)
     contrat = relationship(
         'Contrat',
         back_populates='evenement',

@@ -10,10 +10,10 @@ class Contrat(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     montant_total = Column(Float(precision=2), nullable=False)
     montant_restant = Column(Float(precision=2), nullable=False)
-    date_creation = Column(DateTime)
+    date_creation = Column(DateTime, nullable=False)
     statut_signe = Column(Boolean, default=False)
-    date_signature = Column(DateTime, nullable=True)
-    derniere_maj = Column(DateTime, nullable=True)
+    date_signature = Column(DateTime)
+    derniere_maj = Column(DateTime)
 
     client_id = Column(UUID(as_uuid=True), ForeignKey('clients.id'))
     client = relationship(
@@ -24,7 +24,8 @@ class Contrat(Base):
 
     gestionnaire_id = Column(
         UUID(as_uuid=True),
-        ForeignKey('collaborateurs.id')
+        ForeignKey('collaborateurs.id'),
+        nullable=False
         )
     gestionnaire = relationship(
         'Collaborateur',
