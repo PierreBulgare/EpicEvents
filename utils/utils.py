@@ -4,7 +4,7 @@ from datetime import datetime
 import questionary
 import random
 import string
-from app.settings import APP_TITLE, APP_VERSION, AUTHOR
+from app.settings import APP_TITLE, APP_VERSION, AUTHOR, SENTRY_DSN
 from messages_managers.info import InfoMessage
 from messages_managers.text import TextManager
 from messages_managers.warning import WarningMessage
@@ -44,12 +44,10 @@ class Utils:
         from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
         sentry_sdk.init(
-            dsn=(
-                "https://7c297ddfd49dbcc4fb3f91aa64bc8680@o4509118924128256."
-                "ingest.de.sentry.io/4509118928453712"
-            ),
+            dsn=SENTRY_DSN,
             integrations=[SqlalchemyIntegration()],
             traces_sample_rate=1.0,
+            send_default_pii=True
         )
 
     @staticmethod
