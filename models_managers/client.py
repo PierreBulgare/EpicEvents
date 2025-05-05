@@ -2,14 +2,15 @@ from models import Client, Collaborateur
 from datetime import datetime
 from utils.jwt_utils import JWTManager
 from utils.utils import Utils
-import questionary
 from messages_managers.text import TextManager
 from messages_managers.error import ErrorMessage
 from messages_managers.success import SuccessMessage
 from messages_managers.warning import WarningMessage
 from .database import DatabaseManager
 from .user import UserManager
+from utils.auth import AuthManager
 from app.settings import QUIT_APP_CHOICES
+from utils.permission import Permission
 
 
 class ClientManager:
@@ -18,56 +19,93 @@ class ClientManager:
         self.user = user
 
     def display_client_data(self, client: Client):
+        """
+        Affiche les informations d'un client.
+        Nom complet, email, téléphone et nom de l'entreprise.
+        """
         Utils.new_screen(self.user)
-        print(TextManager.style(TextManager.color("Informations du client".center(50), "blue"), "bold"))
+
+        print(
+            TextManager.style(
+                TextManager.color("Informations du client".center(50), "blue"),
+                "bold"
+            )
+        )
         print(TextManager.color(f"{'Champ':<20} {'Valeur':<30}", "yellow"))
         print("-" * 50)
-        print(f"{'Nom complet':<20} {TextManager.style(client.nom_complet, 'dim'):<30}")
+        print(
+            f"{'Nom complet':<20} "
+            f"{TextManager.style(client.nom_complet, 'dim'):<30}"
+            )
         print(f"{'Email':<20} {TextManager.style(client.email, 'dim'):<30}")
-        print(f"{'Téléphone':<20} {TextManager.style(client.telephone, 'dim'):<30}")
-        print(f"{'Nom de l\'entreprise':<20} {TextManager.style(client.nom_entreprise, 'dim'):<30}")
+        print(
+            f"{'Téléphone':<20} "
+            f"{TextManager.style(client.telephone, 'dim'):<30}"
+            )
+        print(
+            f"{'Nom de l\'entreprise':<20} "
+            f"{TextManager.style(client.nom_entreprise, 'dim'):<30}"
+        )
         print("-" * 50)
+    
+    @staticmethod
+    def get_client(session, warning=False) -> Client:
+        """
+        Récupère un client à partir de son email.
+        """
+        if warning:
+            WarningMessage.cancel_command_info()
 
-    def display_client(self, client_id = None, success_message = None):
+        while True:
+            try:
+                client_email = input("Email du client : ").strip()
+                if not client_email:
+                    ErrorMessage.email_empty()
+                    continue
+                client = session.query(Client
+                                        ).filter_by(email=client_email
+                                                    ).first()
+                if not client:
+                    ErrorMessage.data_not_found(
+                        "Client", client_email)
+                    continue
+                return client
+            except KeyboardInterrupt:
+                WarningMessage.action_cancelled()
+                return
+
+    def display_client(self, client_id=None, success_message=None):
+        """
+        Affiche les informations d'un client avec un menu d'actions.
+        Actions : Modifier, Supprimer.
+        """
         if not JWTManager.token_valid(self.user):
             return
-        
-        
+
         with self.db_manager.session_scope() as session:
             if not client_id:
-                try:
-                    WarningMessage.cancel_command_info()
-                    client_email = input("Email du client à afficher : ").strip()
-                    if not client_email:
-                        ErrorMessage.email_empty()
-                        return
-                    client = session.query(Client).filter_by(email=client_email).first()
-                    if not client:
-                        ErrorMessage.data_not_found("Client", client_email)
-                        return
-                except KeyboardInterrupt:
-                    WarningMessage.action_cancelled()
+                client = ClientManager.get_client(session)
+                if not client:
                     return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
-            
+
             self.display_client_data(client)
+
+            if not Permission.client_management(self.user.role):
+                return
 
             if success_message:
                 success_message(client.nom_complet)
-            
-            CHOICES = [
+
+            choices = [
                 "✏️  Modifier",
                 "❌ Supprimer",
                 "🔙 Retour"
             ] + QUIT_APP_CHOICES
+
             while True:
-                action = questionary.select(
-                    "Que voulez-vous faire ?",
-                    choices=CHOICES,
-                    use_shortcuts=True,
-                    instruction=" ",
-                ).ask()
+                action = Utils.get_questionnary(choices)
 
                 match action:
                     case "✏️  Modifier":
@@ -78,40 +116,64 @@ class ClientManager:
                         break
                     case "🔙 Retour":
                         break
-                    case "❌ Quitter l'application (Sans Déconnexion)":
+                    case "🔒 Déconnexion":
+                        AuthManager.logout()
+                    case "❌ Quitter l'application":
                         Utils.quit_app()
-                    case "🔒 Quitter l'application (Avec Déconnexion)":
-                        Utils.quit_app(user_logout=True)
                     case _:
                         ErrorMessage.action_not_recognized()
 
     def display_all_clients(self):
+        """
+        Affiche la liste de tous les clients dans un tableau.
+        """
         Utils.new_screen(self.user)
+
         if not JWTManager.token_valid(self.user):
             return
-        
+
         with self.db_manager.session_scope() as session:
-            clients = session.query(Client).all()
+            clients = session.query(Client
+                                    ).order_by(Client.nom_complet.asc()).all()
             if not clients:
                 WarningMessage.empty_table(Client.__tablename__)
                 return
-            
+
             width = 50
-            print(TextManager.style(TextManager.color("Liste des clients".center(width), "blue"), "bold"))
+            print(
+                TextManager.style(
+                    TextManager.color(
+                        "Liste des clients".center(width), "blue"
+                        ),
+                    "bold"
+                )
+            )
             print("-" * width)
             print(TextManager.color(f"{'Nom':20} | {'Email':30}", "yellow"))
             print("-" * width)
             for client in clients:
-                print(f"{TextManager.style(client.nom_complet.ljust(20), 'dim')} | {TextManager.style(client.email.ljust(30), 'dim')}")
+                print(
+                    f"{TextManager.style(
+                        client.nom_complet.ljust(20), 'dim'
+                        )} | "
+                    f"{TextManager.style(client.email.ljust(30), 'dim')}"
+                )
             print("-" * width)
 
-
     def create_client(self):
-        WarningMessage.cancel_command_info()
-
+        """
+        Crée un nouveau client.
+        Informations obligatoires : Nom complet, email.
+        Informations facultatives : Téléphone, nom de l'entreprise.
+        """
         if not JWTManager.token_valid(self.user):
             return
-        
+
+        if not Permission.client_management(self.user.role):
+            return
+
+        WarningMessage.cancel_command_info()
+
         while True:
             try:
                 nom_complet = input("Nom complet : ").strip()
@@ -126,7 +188,9 @@ class ClientManager:
                     ErrorMessage.invalid_email()
                     continue
                 telephone = input("Téléphone (Facultatif) : ").strip()
-                nom_entreprise = input("Nom de l'entreprise (Facultatif): ").strip()
+                nom_entreprise = input(
+                    "Nom de l'entreprise (Facultatif): "
+                    ).strip()
                 break
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
@@ -140,37 +204,37 @@ class ClientManager:
                 nom_entreprise=nom_entreprise,
                 date_creation=datetime.now(),
                 derniere_maj=datetime.now(),
-                commercial=session.query(Collaborateur).filter_by(id=self.user.id).first()
+                commercial=session.query(Collaborateur
+                                         ).filter_by(id=self.user.id).first()
             )
             session.add(client)
             session.commit()
             self.display_client(client.id, SuccessMessage.create_success)
 
-    def update_client(self, client_id = None):
+    def update_client(self, client_id=None):
+        """
+        Met à jour les informations d'un client existant.
+        Champs modifiables :
+        - Nom complet
+        - Email
+        - Téléphone
+        - Nom de l'entreprise
+        """
         if not JWTManager.token_valid(self.user):
             return
 
+        if not Permission.client_management(self.user.role):
+            return
+
         with self.db_manager.session_scope() as session:
-            WarningMessage.cancel_command_info()
             if not client_id:
-                while True:
-                    try:
-                        client_email = input("Email du client à modifier : ").strip()
-                        if not client_email:
-                            ErrorMessage.email_empty()
-                            continue
-                        client = session.query(Client).filter_by(email=client_email).first()
-                        if not client:
-                            ErrorMessage.data_not_found("Client", client_email)
-                            continue
-                        self.display_client_data(client)
-                    except KeyboardInterrupt:
-                        WarningMessage.action_cancelled()
-                        return
+                client = ClientManager.get_client(session)
+                if not client:
+                    return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
-                
-            CHOICES = [
+
+            choices = [
                 "Nom complet",
                 "Email",
                 "Téléphone",
@@ -179,138 +243,136 @@ class ClientManager:
                 "Retour"
             ]
 
+            message = None
+
             while True:
-                action = questionary.select(
-                    "Que voulez-vous modifier ?",
-                    choices=CHOICES,
-                    use_shortcuts=True,
-                    instruction=" ",
-                ).ask()
+                self.display_client_data(client)
+                if message:
+                    message()
+                    message = None
+                action = Utils.get_questionnary(choices, edit=True)
 
                 match action:
                     case "Nom complet":
-                        while True:
-                            nom_complet = questionary.text(
-                                f"Nom complet : ",
-                                default=client.nom_complet
-                            ).ask()
-                            if not nom_complet:
-                                ErrorMessage.client_name_empty()
-                                continue
-                            break
-                        client.nom_complet = nom_complet
+                        message = self.update_nom_complet(session, client)
                     case "Email":
-                        while True:
-                            email = questionary.text(
-                                f"Email : ",
-                                default=client.email
-                            ).ask()
-                            if not email:
-                                ErrorMessage.email_empty()
-                                continue
-                            if "@" not in email or "." not in email.split("@")[-1]:
-                                ErrorMessage.invalid_email()
-                                continue
-                            break
-                        client.email = email
+                        message = self.update_email(session, client)
                     case "Téléphone":
-                        telephone = questionary.text(
-                            f"Téléphone (Facultatif) : ",
-                            default=client.telephone
-                        ).ask()
-                        client.telephone = telephone
-                        break
+                        message = self.update_telephone(session, client)
                     case "Nom de l'entreprise":
-                        nom_entreprise = questionary.text(
-                            f"Nom de l'entreprise (Facultatif) : ",
-                            default=client.nom_entreprise
-                        ).ask()
-                        client.nom_entreprise = nom_entreprise
-                        break
+                        message = self.update_nom_entreprise(session, client)
                     case "Tout modifier":
-                        while True:
-                            nom_complet = questionary.text(
-                                f"Nom complet : ",
-                                default=client.nom_complet
-                            ).ask()
-                            if not nom_complet:
-                                ErrorMessage.client_name_empty()
-                                continue
-                            break
-                        while True:
-                            email = questionary.text(
-                                f"Email : ",
-                                default=client.email
-                            ).ask()
-                            if not email:
-                                ErrorMessage.email_empty()
-                                continue
-                            if "@" not in email or "." not in email.split("@")[-1]:
-                                ErrorMessage.invalid_email()
-                                continue
-                            break
-                        telephone = questionary.text(
-                            "Téléphone (Facultatif) : ",
-                            default=client.telephone
-                        ).ask()
-                        nom_entreprise = questionary.text(
-                            "Nom de l'entreprise (Facultatif) : ",
-                            default=client.nom_entreprise
-                        ).ask()
-                        break
+                        messages = [
+                            self.update_nom_complet(session, client),
+                            self.update_email(session, client),
+                            self.update_telephone(session, client),
+                            self.update_nom_entreprise(session, client)
+                        ]
+                        for msg in messages:
+                            if msg:
+                                message = msg
+                                break
                     case "Retour":
                         break
                     case _:
                         ErrorMessage.action_not_recognized()
+                        continue
 
-            client.derniere_maj = datetime.now()
-            
-            session.commit()
-            self.display_client(client.id, SuccessMessage.update_success)
+    def update_nom_complet(self, session, client: Client) -> str:
+        """
+        Met à jour le nom complet d'un client.
+        """
+        message = None
+        while True:
+            nom_complet = Utils.get_input(
+                "Nom complet :",client.nom_complet)
+            if client.nom_complet != nom_complet:
+                if not nom_complet:
+                    ErrorMessage.client_name_empty()
+                    continue
+                client.nom_complet = nom_complet
+                message = SuccessMessage.update_success
+                self.db_manager.update_commit(client, session)
+            return message
+        
+    def update_email(self, session, client: Client) -> str:
+        """
+        Met à jour l'email d'un client.
+        """
+        message = None
+        while True:
+            email = Utils.get_input(
+                "Email :", client.email)
+            if client.email != email:
+                if not email:
+                    ErrorMessage.email_empty()
+                    continue
+                if not Utils.email_is_valid(email):
+                    ErrorMessage.invalid_email()
+                    continue
+                query = session.query(Client
+                                    ).filter_by(email=email
+                                                ).first()
+                if query:
+                    ErrorMessage.client_email_already_exists(
+                        email
+                        )
+                    continue
+                client.email = email
+                message = SuccessMessage.update_success
+                self.db_manager.update_commit(client, session)
+            return message
+        
+    def update_telephone(self, session, client: Client) -> str:
+        """
+        Met à jour le numéro de téléphone d'un client.
+        """
+        message = None
+        telephone = Utils.get_input(
+            "Téléphone (Facultatif) :", client.telephone)
+        if client.telephone != telephone:
+            client.telephone = telephone
+            message = SuccessMessage.update_success
+            self.db_manager.update_commit(client, session)
+        return message
+    
+    def update_nom_entreprise(self, session, client: Client) -> str:
+        """
+        Met à jour le nom de l'entreprise d'un client.
+        """
+        message = None
+        nom_entreprise = Utils.get_input(
+            "Nom de l'entreprise (Facultatif) :",
+            client.nom_entreprise
+        )
+        if client.nom_entreprise != nom_entreprise:
+            client.nom_entreprise = nom_entreprise
+            message = SuccessMessage.update_success
+            self.db_manager.update_commit(client, session)
+        return message
 
-    def delete_client(self, client_id = None):
+    def delete_client(self, client_id=None):
+        """
+        Supprime un client de la base de données.
+        """
         if not JWTManager.token_valid(self.user):
             return
-            
+
+        if not Permission.client_management(self.user.role):
+            return
+
         with self.db_manager.session_scope() as session:
             WarningMessage.cancel_command_info()
             if not client_id:
-                while True:
-                    try:
-                        client_email = input("Email du client à supprimer : ").strip()
-                        if not client_email:
-                            ErrorMessage.email_empty()
-                            continue
-                        client = session.query(Client).filter_by(email=client_email).first()
-                        if not client:
-                            ErrorMessage.data_not_found("Client", client_email)
-                            continue
-                        self.display_client_data(client)
-                    except KeyboardInterrupt:
-                        WarningMessage.action_cancelled()
-                        return
+                client = ClientManager.get_client(session)
+                if not client:
+                    return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
-            
 
-            while True:
-                confirmation = questionary.select(
-                    f"Êtes-vous sûr de vouloir supprimer le client '{client.nom_complet}' ?",
-                    choices=["Oui", "Non"],
-                    use_shortcuts=True,
-                    instruction=" ",
-                ).ask()
+            if not Utils.confirm_deletion():
+                return
 
-                match confirmation:
-                    case "Oui":
-                        break
-                    case "Non":
-                        WarningMessage.action_cancelled()
-                        return
-                    case _:
-                        ErrorMessage.action_not_recognized()
-            
-            # Suppression du client
             session.delete(client)
             session.commit()
             Utils.new_screen(self.user)

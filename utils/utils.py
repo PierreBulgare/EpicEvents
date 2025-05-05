@@ -1,9 +1,12 @@
 import os
 import sys
-import time
+from datetime import datetime
+import questionary
 from app.settings import APP_TITLE, APP_VERSION, AUTHOR
 from messages_managers.info import InfoMessage
-from .auth import AuthManager
+from messages_managers.text import TextManager
+from messages_managers.warning import WarningMessage
+from messages_managers.error import ErrorMessage
 
 
 class Utils:
@@ -28,11 +31,9 @@ class Utils:
         cls.display_app_title(user, admin)
 
     @staticmethod
-    def quit_app(user_logout=False):
-        if user_logout:
-            AuthManager.logout()
+    def quit_app():
         InfoMessage.end_program()
-        time.sleep(1)
+        # time.sleep(1)
         sys.exit(0)
 
     @staticmethod
@@ -48,3 +49,61 @@ class Utils:
             integrations=[SqlalchemyIntegration()],
             traces_sample_rate=1.0,
         )
+
+    @staticmethod
+    def get_questionnary(choices=None, edit=False, delete=False):
+        if edit:
+            question = "Que voulez-vous modifier ?"
+        elif delete:
+            choices = ["Confirmer", "Annuler"]
+            question = "Confirmez-vous la suppression ?"
+        else:
+            question = "Que voulez-vous faire ?"
+        return questionary.select(
+                question,
+                choices=choices,
+                use_shortcuts=True,
+                instruction=" ",
+            ).ask()
+    
+    @staticmethod
+    def get_input(field, default=""):
+        return questionary.text(
+                field,
+                default=default,
+            ).ask()
+    
+    @classmethod
+    def confirm_deletion(cls):
+        while True:
+            confirmation = cls.get_questionnary(delete=True)
+            match confirmation:
+                case "Confirmer":
+                    break
+                case "Annuler":
+                    WarningMessage.action_cancelled()
+                    return False
+                case _:
+                    ErrorMessage.action_not_recognized()
+        return True
+
+    
+    @staticmethod
+    def email_is_valid(email):
+        if "@" not in email or "." not in email.split("@")[-1]:
+            return False
+        return True
+    
+    @staticmethod
+    def date_is_valid(date):
+        try:
+            datetime.strptime(date, "%d-%m-%Y")
+            return True
+        except ValueError:
+            return False
+    
+    @staticmethod
+    def display_menu_title(title):
+        print(TextManager.style(
+                TextManager.color(title, "magenta"),
+                "bold"))

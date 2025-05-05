@@ -1,18 +1,20 @@
-import questionary
 from .jwt_utils import JWTManager
 from .utils import Utils
 from .auth import AuthManager
-from app.settings import QUIT_APP_CHOICES
+from app.settings import QUIT_APP_CHOICES, BACK_TO_MAIN_MENU
 from models_managers.database import DatabaseManager
 from models_managers.client import ClientManager
 from models_managers.contract import ContractManager
 from models_managers.event import EventManager
 from models_managers.role import RoleManager
+from models_managers.user import UserManager
 from messages_managers.error import ErrorMessage
+from messages_managers.text import TextManager
+from .permission import Permission
 
 
 class MenuManager:
-    def __init__(self, db_manager: DatabaseManager, user=None):
+    def __init__(self, db_manager: DatabaseManager, user: UserManager=None):
         self.user = user
         self.db_manager = db_manager
         self.client_manager = ClientManager(db_manager, user)
@@ -30,20 +32,13 @@ class MenuManager:
 
         if not JWTManager.token_exist():
             while True:
-                action = questionary.select(
-                    "🔑 Connexion/Inscription",
-                    choices=choices,
-                    use_shortcuts=True,
-                    instruction=" ",
-                ).ask()
+                action = Utils.get_questionnary(choices)
 
                 match action:
                     case "🔑 Se connecter":
                         AuthManager.login(self.db_manager)
-                        token = JWTManager.get_token()
-                        payload = JWTManager.get_payload(token)
-                        if payload:
-                            self.user.init_user(token, payload)
+                        self.user.init_user()
+                        if hasattr(self.user, "payload"):
                             break
                     case "📝 Créer un compte":
                         self.user.create_account(self.db_manager)
@@ -53,78 +48,72 @@ class MenuManager:
                     case _:
                         ErrorMessage.action_not_recognized()
         else:
-            token = JWTManager.get_token()
-            payload = JWTManager.get_payload(token)
+            payload = JWTManager.get_payload(JWTManager.get_token())
             if payload is None:
                 ErrorMessage.invalid_token()
                 AuthManager.login(self.db_manager)
-                token = JWTManager.get_token()
-                payload = JWTManager.get_payload(token)
-                if payload:
-                    self.user.init_user(token, payload)
+                self.user.init_user()
             else:
-                self.user.init_user(token, payload)
+                self.user.init_user()
 
+            if not self.user.user_exists():
+                JWTManager.delete_token()
+                return
 
     def main_menu(self):
-        Utils.new_screen(self.user)
-        
-        choices = QUIT_APP_CHOICES.copy()
-        if self.user.role == "Commercial":
-            choices.insert(0, "👤 Gérer les clients")
-            choices.insert(1, "🎫 Gérer les événements")
-        elif self.user.role == "Gestion":
-            choices.insert(0, "📜 Gérer les contrats")
-            choices.insert(1, "🎫 Gérer les événements")
-        elif self.user.role == "Support":
-            choices.insert(0, "🎫 Gérer les événements")
+        choices = [
+            "👤 Clients",
+            "📜 Contrats",
+            "🎫 Événements"
+        ] + QUIT_APP_CHOICES
+
         while True:
-            action = questionary.select(
-                "📑 Menu Principal",
-                choices=choices,
-                use_shortcuts=True,
-                instruction=" ",
-            ).ask()
+            if not JWTManager.token_exist():
+                break
+            
+            Utils.new_screen(self.user)
+            Utils.display_menu_title("Menu principal")
+            action = Utils.get_questionnary(choices)
 
             match action:
-                case "👤 Gérer les clients":
+                case "👤 Clients":
                     self.manage_clients()
                     continue
-                case "📜 Gérer les contrats":
+                case "📜 Contrats":
                     self.manage_contract()
                     continue
-                case "🎫 Gérer les événements":
+                case "🎫 Événements":
                     self.manage_events()
                     continue
-                case "❌ Quitter l'application (Sans Déconnexion)":
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                    break
+                case "❌ Quitter l'application":
                     Utils.quit_app()
-                case "🔒 Quitter l'application (Avec Déconnexion)":
-                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
 
     def manage_clients(self):
         Utils.new_screen(self.user)
 
-        CHOICES = [
-            "👤 Afficher tous les clients",
-            "👤 Afficher un client",
-            "🆕 Ajouter un client",
-            "✏️  Modifier un client",
-            "❌ Supprimer un client",
-            "🔙 Retourner au menu principal"
-        ] + QUIT_APP_CHOICES
+        choices = [
+            "👤 Afficher la liste des clients",
+            "👤 Afficher un client"
+        ]
+
+        if Permission.client_management(self.user.role):
+            choices.append("🆕 Ajouter un client")
+            choices.append("✏️  Modifier un client")
+            choices.append("❌ Supprimer un client")
+
+        choices.extend([BACK_TO_MAIN_MENU] + QUIT_APP_CHOICES)
 
         while True:
-            action = questionary.select(
-                "Menu Principal",
-                choices=CHOICES,
-                use_shortcuts=True,
-                instruction=" "
-            ).ask()
+            Utils.display_menu_title("Menu Client")
+            action = Utils.get_questionnary(choices)
 
             match action:
-                case "👤 Afficher tous les clients":
+                case "👤 Afficher la liste des clients":
                     self.client_manager.display_all_clients()
                     continue
                 case "👤 Afficher un client":
@@ -139,38 +128,38 @@ class MenuManager:
                 case "❌ Supprimer un client":
                     self.client_manager.delete_client()
                     continue
-                case "🔙 Retourner au menu principal":
+                case "🔙 Retour au menu principal":
                     break
-                case "❌ Quitter l'application (Sans Déconnexion)":
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                    break
+                case "❌ Quitter l'application":
                     Utils.quit_app()
-                case "🔒 Quitter l'application (Avec Déconnexion)":
-                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
 
     def manage_contract(self):
         Utils.new_screen(self.user)
 
-        CHOICES = [
-            "🗂️  Afficher tous les contrats",
-            "📜 Afficher un contrat",
-            "🆕 Créer un contrat",
-            "✏️  Modifier un contrat",
-            "🖋️  Signer un contrat",
-            "❌ Supprimer un contrat",
-            "🔙 Retourner au menu principal"
-        ] + QUIT_APP_CHOICES
+        choices = [
+            "🗂️  Afficher la liste des contrats",
+            "📜 Afficher un contrat"
+        ]
+
+        if Permission.contract_management(self.user.role):
+            choices.append("🆕 Créer un contrat")
+            choices.append("🖋️  Signer un contrat")
+            choices.append("✏️  Modifier un contrat")
+            choices.append("❌ Supprimer un contrat")
+
+        choices.extend([BACK_TO_MAIN_MENU] + QUIT_APP_CHOICES)
 
         while True:
-            action = questionary.select(
-                "Menu Principal",
-                choices=CHOICES,
-                use_shortcuts=True,
-                instruction=" ",
-            ).ask()
+            Utils.display_menu_title("Menu Contrat")
+            action = Utils.get_questionnary(choices)
 
             match action:
-                case "🗂️  Afficher tous les contrats":
+                case "🗂️  Afficher la liste des contrats":
                     self.contract_manager.display_all_contracts()
                     continue
                 case "📜 Afficher un contrat":
@@ -179,54 +168,54 @@ class MenuManager:
                 case "🆕 Créer un contrat":
                     self.contract_manager.create_contract()
                     continue
-                case "✏️  Modifier un contrat":
-                    self.contract_manager.update_contract()
-                    continue
                 case "🖋️  Signer un contrat":
                     self.contract_manager.sign_contract()
+                    continue
+                case "✏️  Modifier un contrat":
+                    self.contract_manager.update_contract()
                     continue
                 case "❌ Supprimer un contrat":
                     self.contract_manager.delete_contract()
                     continue
-                case "🔙 Retourner au menu principal":
+                case "🔙 Retour au menu principal":
                     break
-                case "❌ Quitter l'application (Sans Déconnexion)":
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                    break
+                case "❌ Quitter l'application":
                     Utils.quit_app()
-                case "🔒 Quitter l'application (Avec Déconnexion)":
-                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
-
 
     def manage_events(self):
         Utils.new_screen(self.user)
 
-        CHOICES = [
-            "🗂️  Afficher tous les événements",
-            "🎫 Afficher un événement",
-            "🔙 Retourner au menu principal"
-        ] + QUIT_APP_CHOICES
+        choices = [
+            "🗂️  Afficher la liste des événements",
+            "🎫 Afficher un événement"
+        ]
 
-        if self.user.role == "Commercial":
-            CHOICES.insert(2, "🆕 Créer un événement")
-            CHOICES.insert(3, "✏️  Modifier un événement")
-            CHOICES.insert(4, "❌ Supprimer un événement")
-        elif self.user.role == "Gestion":
-            CHOICES.insert(2, "✏️  Assigner un Contact Support")
-        elif self.user.role == "Support":
-            CHOICES.insert(2, "✏️  Modifier un événement")
-            CHOICES.insert(3, "❌ Supprimer un événement")
+        if Permission.create_event(self.user.role):
+            choices.append("🆕 Créer un événement")
+
+        if Permission.assign_event(self.user.role):
+            choices.append("👤 Assigner un évènement")
+
+        if Permission.update_event(self.user.role):
+            choices.append("📝 Ajouter une note à un événement")
+            choices.append("✏️  Modifier un événement")
+
+        if Permission.delete_event(self.user.role):
+            choices.append("❌ Supprimer un événement")
+
+        choices.extend([BACK_TO_MAIN_MENU] + QUIT_APP_CHOICES)
 
         while True:
-            action = questionary.select(
-                "Menu Principal",
-                choices=CHOICES,
-                use_shortcuts=True,
-                instruction=" ",
-            ).ask()
+            Utils.display_menu_title("Menu Événement")
+            action = Utils.get_questionnary(choices)
 
             match action:
-                case "🗂️  Afficher tous les événements":
+                case "🗂️  Afficher la liste des événements":
                     self.event_manager.display_all_events()
                     continue
                 case "🎫 Afficher un événement":
@@ -235,24 +224,27 @@ class MenuManager:
                 case "🆕 Créer un événement":
                     self.event_manager.create_event()
                     continue
+                case "👤 Assigner un évènement":
+                    self.event_manager.assign_event()
+                    continue
+                case "📝 Ajouter une note à un événement":
+                    self.event_manager.add_note()
+                    continue
                 case "✏️  Modifier un événement":
                     self.event_manager.update_event()
-                    continue
-                case "✏️  Assigner un Contact Support":
-                    self.event_manager.assign_support()
                     continue
                 case "❌ Supprimer un événement":
                     self.event_manager.delete_event()
                     continue
-                case "🔙 Retourner au menu principal":
+                case "🔙 Retour au menu principal":
                     break
-                case "❌ Quitter l'application (Sans Déconnexion)":
+                case "🔒 Déconnexion":
+                    AuthManager.logout()
+                    break
+                case "❌ Quitter l'application":
                     Utils.quit_app()
-                case "🔒 Quitter l'application (Avec Déconnexion)":
-                    Utils.quit_app(user_logout=True)
                 case _:
                     ErrorMessage.action_not_recognized()
-
 
     def admin_menu(self):
         """
@@ -265,7 +257,7 @@ class MenuManager:
         """
         Utils.new_screen(self.user, admin=True)
 
-        CHOICES = [
+        choices = [
             "Créer ou mettre à jour les tables",
             "Créer un rôle",
             "Supprimer les tables",
@@ -273,12 +265,7 @@ class MenuManager:
         ]
 
         while True:
-            action = questionary.select(
-                "Que voulez-vous faire ?",
-                choices=CHOICES,
-                use_shortcuts=True,
-                instruction=" ",
-            ).ask()
+            action = Utils.get_questionnary(choices)
 
             match action:
                 case "Créer ou mettre à jour les tables":

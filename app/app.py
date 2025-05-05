@@ -15,9 +15,10 @@ from messages_managers.text  import TextManager
 def run():
     TextManager.init_colorama()
     Utils.init_sentry()
-    menu_manager = MenuManager(DatabaseManager(), UserManager())
-    menu_manager.main_page()
-    menu_manager.main_menu()
+    while True:
+        menu_manager = MenuManager(DatabaseManager(), UserManager())
+        menu_manager.main_page()
+        menu_manager.main_menu()
 
 
 if __name__ == "__main__":

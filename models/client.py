@@ -30,3 +30,6 @@ class Client(Base):
         back_populates='client',
         foreign_keys='Contrat.client_id'
         )
+    
+    def __str__(self):
+        return self.nom_complet

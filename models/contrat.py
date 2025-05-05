@@ -38,3 +38,6 @@ class Contrat(Base):
         uselist=False,
         foreign_keys='Evenement.contrat_id'
         )
+
+    def __str__(self):
+        return str(self.id)

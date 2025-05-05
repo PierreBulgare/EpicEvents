@@ -37,3 +37,6 @@ class Collaborateur(Base):
         back_populates='commercial',
         foreign_keys='Evenement.commercial_id'
         )
+
+    def __str__(self):
+        return self.nom

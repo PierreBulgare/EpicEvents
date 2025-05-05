@@ -13,12 +13,28 @@ class UserManager:
     def __init__(self):
         pass
 
-    def init_user(self, token, payload):
-        self.id = payload.get("user_id")
-        self.name = payload.get("user_name")
-        self.role = payload.get("user_role")
-        self.token = token
-        self.payload = payload
+    def init_user(self):
+        token = JWTManager.get_token()
+        payload = JWTManager.get_payload(token)
+        if payload:
+            self.id = payload.get("user_id")
+            self.name = payload.get("user_name")
+            self.role = payload.get("user_role")
+            self.token = token
+            self.payload = payload
+
+    def user_exists(self):
+        with DatabaseManager().session_scope() as session:
+            try:
+                collaborateur = session.query(Collaborateur).filter_by(
+                    id=self.id).first()
+                if not collaborateur:
+                    return False
+                return True
+            except Exception as e:
+                ErrorMessage.database_error()
+                sentry_sdk.capture_exception(e)
+                return False
 
     @staticmethod
     def create_account(db_manager: DatabaseManager):
@@ -29,74 +45,78 @@ class UserManager:
         WarningMessage.cancel_command_info()
 
         with db_manager.session_scope() as session:
-            # Prénom
-            while True:
-                prenom = input("Prénom : ")
-                if not prenom:
-                    ErrorMessage.user_firstname_empty()
-                    continue
-                break
+            try:
+                # Prénom
+                while True:
+                    prenom = input("Prénom : ")
+                    if not prenom:
+                        ErrorMessage.user_firstname_empty()
+                        continue
+                    break
 
-            # Nom
-            while True:
-                nom_de_famille = input("Nom : ")
-                if not nom_de_famille:
-                    ErrorMessage.username_empty()
-                    continue
-                nom = f"{prenom} {nom_de_famille.upper()}"
-                break
+                # Nom
+                while True:
+                    nom_de_famille = input("Nom : ")
+                    if not nom_de_famille:
+                        ErrorMessage.username_empty()
+                        continue
+                    nom = f"{prenom} {nom_de_famille.upper()}"
+                    break
 
-            # Email
-            while True:
-                email = input("Email : ")
-                if not email:
-                    ErrorMessage.email_empty()
-                    continue
-                if "@" not in email or "." not in email.split("@")[-1]:
-                    ErrorMessage.invalid_email()
-                    continue
-                try:
-                    collaborateur = session.query(
-                        Collaborateur
-                    ).filter_by(email=email).first()
-                except Exception as e:
-                    ErrorMessage.database_error()
-                    sentry_sdk.capture_exception(e)
-                    continue
-                if collaborateur:
-                    ErrorMessage.account_already_exists()
-                    continue
-                break
+                # Email
+                while True:
+                    email = input("Email : ")
+                    if not email:
+                        ErrorMessage.email_empty()
+                        continue
+                    if "@" not in email or "." not in email.split("@")[-1]:
+                        ErrorMessage.invalid_email()
+                        continue
+                    try:
+                        collaborateur = session.query(
+                            Collaborateur
+                        ).filter_by(email=email).first()
+                    except Exception as e:
+                        ErrorMessage.database_error()
+                        sentry_sdk.capture_exception(e)
+                        continue
+                    if collaborateur:
+                        ErrorMessage.account_already_exists()
+                        continue
+                    break
 
-            # Rôle
-            while True:
-                role_nom = input(
-                    "Rôle (Commercial, Gestion, Support) : "
-                ).capitalize()
-                if not role_nom:
-                    ErrorMessage.role_empty()
-                    continue
-                try:
-                    role = session.query(Role).filter_by(nom=role_nom).first()
-                except Exception as e:
-                    ErrorMessage.database_error()
-                    sentry_sdk.capture_exception(e)
-                    continue
-                if not role:
-                    ErrorMessage.invalid_role()
-                    continue
-                break
+                # Rôle
+                while True:
+                    role_nom = input(
+                        "Rôle (Commercial, Gestion, Support) : "
+                    ).capitalize()
+                    if not role_nom:
+                        ErrorMessage.role_empty()
+                        continue
+                    try:
+                        role = session.query(Role).filter_by(nom=role_nom).first()
+                    except Exception as e:
+                        ErrorMessage.database_error()
+                        sentry_sdk.capture_exception(e)
+                        continue
+                    if not role:
+                        ErrorMessage.invalid_role()
+                        continue
+                    break
 
-            # Mot de passe
-            while True:
-                password = pwinput.pwinput(prompt="Mot de passe : ")
-                if not password:
-                    ErrorMessage.password_empty()
-                    continue
-                if len(password) < 8:
-                    ErrorMessage.password_too_short()
-                    continue
-                break
+                # Mot de passe
+                while True:
+                    password = pwinput.pwinput(prompt="Mot de passe : ")
+                    if not password:
+                        ErrorMessage.password_empty()
+                        continue
+                    if len(password) < 8:
+                        ErrorMessage.password_too_short()
+                        continue
+                    break
+            except KeyboardInterrupt:
+                WarningMessage.action_cancelled()
+                return
 
             # Création du collaborateur
             new_collaborateur = Collaborateur(

@@ -12,7 +12,8 @@ APP_TITLE = "EPIC Events"
 APP_VERSION = "1.0.0"
 AUTHOR = "Pierre BULGARE"
 QUIT_APP_CHOICES = [
-    "❌ Quitter l'application (Sans Déconnexion)",
-    "🔒 Quitter l'application (Avec Déconnexion)"
+    "🔒 Déconnexion",
+    "❌ Quitter l'application"
     ]
 ROLES = ["Commercial", "Gestion", "Support"]
+BACK_TO_MAIN_MENU = "🔙 Retour au menu principal"

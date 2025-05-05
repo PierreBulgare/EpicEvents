@@ -6,14 +6,13 @@ from .jwt_utils import JWTManager
 from .password_security import PasswordSecurity
 from messages_managers.error import ErrorMessage
 from messages_managers.success import SuccessMessage
-from models_managers.database import DatabaseManager
 from messages_managers.warning import WarningMessage
 from app.settings import ADMIN_PASSWORD
 
 
 class AuthManager:
     @staticmethod
-    def login(db_manager: DatabaseManager):
+    def login(db_manager):
         JWTManager.delete_token()
         WarningMessage.cancel_command_info()
 
@@ -68,8 +67,8 @@ class AuthManager:
     @staticmethod
     def login_admin():
         WarningMessage.cancel_command_info()
-        try:
-            while True:
+        while True:
+            try:
                 password = pwinput.pwinput(
                     prompt="Mot de passe (Administrateur): "
                     )
@@ -80,9 +79,9 @@ class AuthManager:
                     ErrorMessage.admin_password_incorrect()
                     continue
                 break
-        except KeyboardInterrupt:
-            WarningMessage.action_cancelled()
-            return
+            except KeyboardInterrupt:
+                WarningMessage.action_cancelled()
+                return
 
     @staticmethod
     def logout():

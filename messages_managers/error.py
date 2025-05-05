@@ -24,6 +24,15 @@ class ErrorMessage():
         )
 
     @classmethod
+    def client_email_already_exists(cls, email):
+        print(
+            TextManager.color(
+                f"L'email {email} est déjà utilisé pour un autre client.",
+                cls.color
+            )
+        )
+
+    @classmethod
     def username_empty(cls):
         print(
             TextManager.color(
@@ -206,6 +215,24 @@ class ErrorMessage():
         )
 
     @classmethod
+    def contract_already_linked(cls, event):
+        print(
+            TextManager.color(
+                f"Ce contrat est déjà lié à l'événement {event.nom} ({event.id}).",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def invalid_id(cls):
+        print(
+            TextManager.color(
+                "L'ID fourni est invalide.",
+                cls.color
+            )
+        )
+
+    @classmethod
     def contract_client_mismatch(cls, contract_id, client):
         print(
             TextManager.color(
@@ -274,6 +301,15 @@ class ErrorMessage():
         print(
             TextManager.color(
                 "Le nombre de participants ne peut pas être vide.",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_note_empty(cls):
+        print(
+            TextManager.color(
+                "La note ne peut pas être vide.",
                 cls.color
             )
         )

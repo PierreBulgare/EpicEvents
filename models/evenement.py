@@ -13,7 +13,7 @@ class Evenement(Base):
     date_fin = Column(DateTime)
     lieu = Column(String(255))
     nombre_participants = Column(Integer, default=0)
-    notes = Column(String(500))
+    notes = Column(String, nullable=True)
     date_creation = Column(DateTime)
     derniere_maj = Column(DateTime, nullable=True)
 
@@ -44,3 +44,6 @@ class Evenement(Base):
         back_populates='evenements_support',
         foreign_keys=[support_id]
         )
+
+    def __str__(self):
+        return f"{self.nom} ({str(self.id)})"

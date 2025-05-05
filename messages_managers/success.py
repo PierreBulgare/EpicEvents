@@ -23,6 +23,24 @@ class SuccessMessage():
         )
 
     @classmethod
+    def assign_success(cls, event, support):
+        print(
+            TextManager.color(
+                f"Assignation de l'événement {event} au support {support} ",
+                cls.color
+            )
+        )
+
+    @classmethod
+    def event_note_success(cls):
+        print(
+            TextManager.color(
+                f"Note ajoutée avec succès !",
+                cls.color
+            )
+        )
+
+    @classmethod
     def delete_success(cls, *args):
         print(
             TextManager.color(

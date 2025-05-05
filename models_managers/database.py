@@ -7,6 +7,9 @@ from models import Base
 from messages_managers.success import SuccessMessage
 from messages_managers.error import ErrorMessage
 from messages_managers.warning import WarningMessage
+from utils.utils import Utils
+from messages_managers.text import TextManager
+from datetime import datetime
 
 class DatabaseManager:
     def __init__(self):
@@ -35,6 +38,19 @@ class DatabaseManager:
         """
         Supprime toutes les tables de la base de données.
         """
+        choices = ["Confirmer", "Annuler"]
+        print(TextManager.color("ATTENTION : Cette action supprimera toutes les tables de la base de données !", "yellow"))
+        while True:
+            answer = Utils.get_questionnary(choices).ask()
+            match answer:
+                case "Confirmer":
+                    break
+                case "Annuler":
+                    WarningMessage.action_cancelled()
+                    return
+                case _:
+                    ErrorMessage.action_not_recognized()
+    
         Base.metadata.drop_all(self.engine)
         SuccessMessage.tables_dropped()
 
@@ -87,3 +103,10 @@ class DatabaseManager:
             print(f"Erreur : {e}")
         finally:
             self.close_session(session)
+
+    def update_commit(self, model, session):
+        """
+        Commit les changements dans la session.
+        """
+        model.derniere_maj = datetime.now()
+        session.commit()

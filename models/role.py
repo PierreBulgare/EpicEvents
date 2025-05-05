@@ -13,3 +13,6 @@ class Role(Base):
         back_populates='role',
         foreign_keys='Collaborateur.role_id'
         )
+    
+    def __str__(self):
+        return self.nom
