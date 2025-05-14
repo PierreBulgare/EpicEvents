@@ -1,4 +1,4 @@
-from models import Client, Collaborateur, Contrat
+from models import Collaborateur, Contrat
 from datetime import datetime
 from utils.jwt_utils import JWTManager
 from utils.utils import Utils
@@ -29,20 +29,53 @@ class ContractManager:
         """
         Utils.new_screen(self.user)
 
-        print(TextManager.style(TextManager.color("Informations du contrat".center(50), "blue"), "bold"))
+        print(
+            TextManager.style(
+                TextManager.color(
+                    "Informations du contrat".center(50),
+                    "blue"),
+                "bold"))
         print(TextManager.color(f"{'Champ':<20} {'Valeur':<30}", "yellow"))
         print("-" * 50)
         print(f"{'ID':<20} {TextManager.style(contract.id, 'dim'):<30}")
-        print(f"{'Client':<20} {TextManager.style(contract.client.nom_complet, 'dim'):<30}")
-        print(f"{'Montant total':<20} {TextManager.style(f'{float(contract.montant_total):.2f} €', 'dim'):<30}")
-        print(f"{'Montant dû':<20} {TextManager.style(f'{float(contract.montant_restant):.2f} €', 'dim'):<30}")
-        print(f"{'Date de création':<20} {TextManager.style(contract.date_creation.strftime('%Y-%m-%d %H:%M'), 'dim'):<30}")
-        print(f"{'Signé ?':<20} {TextManager.style('Oui' if contract.statut_signe else 'Non', 'dim'):<30}")
+        print(
+            f"{'Client':<20} {TextManager.style(
+                contract.client.nom_complet, 'dim'):<30}")
+        print(f"{'Montant total':<20} {TextManager.style(
+            f'{float(contract.montant_total):.2f} €', 'dim'):<30}")
+        print(f"{'Montant dû':<20} {TextManager.style(
+            f'{float(contract.montant_restant):.2f} €', 'dim'):<30}")
+        print(
+            f"{
+                'Date de création':<20} {
+                TextManager.style(
+                    contract.date_creation.strftime('%Y-%m-%d %H:%M'),
+                    'dim'):<30}")
+        print(
+            f"{
+                'Signé ?':<20} {
+                TextManager.style(
+                    'Oui' if contract.statut_signe else 'Non',
+                    'dim'):<30}")
         if contract.statut_signe:
-            print(f"{'Date de signature':<20} {TextManager.style(contract.date_signature.strftime('%Y-%m-%d %H:%M'), 'dim'):<30}")
-        print(f"{'Gestionnaire':<20} {TextManager.style(contract.gestionnaire.nom, 'dim'):<30}")
-        print(f"{'Commercial':<20} {TextManager.style(contract.client.commercial.nom, 'dim'):<30}")
-        print(f"{'Dernière mise à jour':<20} {TextManager.style(contract.derniere_maj.strftime('%Y-%m-%d %H:%M'), 'dim'):<30}")
+            print(
+                f"{
+                    'Date de signature':<20} {
+                    TextManager.style(
+                        contract.date_signature.strftime('%Y-%m-%d %H:%M'),
+                        'dim'):<30}")
+        print(
+            f"{'Gestionnaire':<20} {TextManager.style(
+                contract.gestionnaire.nom, 'dim'):<30}")
+        print(
+            f"{'Commercial':<20} {TextManager.style(
+                contract.client.commercial.nom, 'dim'):<30}")
+        print(
+            f"{
+                'Dernière mise à jour':<20} {
+                TextManager.style(
+                    contract.derniere_maj.strftime('%Y-%m-%d %H:%M'),
+                    'dim'):<30}")
         print("-" * 50)
 
     @staticmethod
@@ -88,16 +121,16 @@ class ContractManager:
                 if not contract:
                     return
             else:
-                contract = session.query(Contrat).filter_by(id=contract_id).first()
-            
+                contract = session.query(Contrat).filter_by(
+                    id=contract_id).first()
+
             self.display_contract_data(contract)
 
             if not Permission.contract_management(self.user.role):
                 return
-            
-            if (self.user.role == "Commercial"
-                and str(contract.client.commercial.id) != str(self.user.id)
-            ):
+
+            if (self.user.role == "Commercial" and str(
+                    contract.client.commercial.id) != str(self.user.id)):
                 return
 
             if success_message:
@@ -109,7 +142,8 @@ class ContractManager:
                 "🔙 Retour"
             ] + QUIT_APP_CHOICES
 
-            if Permission.sign_contract(self.user.role) and not contract.statut_signe:
+            if Permission.sign_contract(
+                    self.user.role) and not contract.statut_signe:
                 choices.insert(0, "🖊️  Signer")
 
             while True:
@@ -143,7 +177,7 @@ class ContractManager:
 
         if not Permission.contract_management(self.user.role):
             return
-        
+
         if self.user.role != "Commercial":
             self.display_all_contracts()
             return
@@ -187,7 +221,8 @@ class ContractManager:
             return
 
         with self.db_manager.session_scope() as session:
-            query = session.query(Contrat).order_by(Contrat.date_creation.desc())
+            query = session.query(Contrat).order_by(
+                Contrat.date_creation.desc())
 
             title = "Liste des contrats"
             if filter == "statut_signe=False":
@@ -200,23 +235,45 @@ class ContractManager:
             contracts = query.all()
 
             width = 120
-            print(TextManager.style(TextManager.color(title.center(width), "blue"), "bold"))
+            print(
+                TextManager.style(
+                    TextManager.color(
+                        title.center(width),
+                        "blue"),
+                    "bold"))
             print("-" * width)
-            print(TextManager.color(f"{'ID':36} | {'Client':20} | {'Montant total':20} | {'Montant restant':20} | {'Signé ?':10}", "yellow"))
+            print(
+                TextManager.color(
+                    f"{
+                        'ID':36} | {
+                        'Client':20} | {
+                        'Montant total':20} | {
+                        'Montant restant':20} | {
+                            'Signé ?':10}",
+                    "yellow"))
             print("-" * width)
             if not contracts:
                 print(TextManager.color("Aucun contrat trouvé.", "red"))
                 return
             for contract in contracts:
                 id_str = TextManager.style(contract.id, 'dim')
-                client_str = TextManager.style(contract.client.nom_complet.ljust(20), 'dim')
-                montant_str = TextManager.style(f"{float(contract.montant_total):,.2f} €".replace(',', ' ').ljust(20), 'dim')
-                montant_restant_str = TextManager.style(f"{float(contract.montant_restant):,.2f} €".replace(',', ' ').ljust(20), 'dim')
+                client_str = TextManager.style(
+                    contract.client.nom_complet.ljust(20), 'dim')
+                montant_str = TextManager.style(
+                    f"{float(contract.montant_total):,.2f} €"
+                    .replace(',', ' ')
+                    .ljust(20), 'dim')
+                montant_restant_str = TextManager.style(
+                    f"{float(contract.montant_restant):,.2f} €"
+                    .replace(',', ' ')
+                    .ljust(20), 'dim')
                 if contract.statut_signe:
                     statut_str = TextManager.color("Oui", 'green')
                 else:
                     statut_str = TextManager.color("Non", 'red')
-                print(f"{id_str:36} | {client_str} | {montant_str} | {montant_restant_str} | {statut_str:10}")
+                print(
+                    f"{id_str:36} | {client_str} | {montant_str} | "
+                    f"{montant_restant_str} | {statut_str:10}")
             print("-" * width)
 
     def create_contract(self):
@@ -228,9 +285,9 @@ class ContractManager:
 
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if (not Permission.contract_management(self.user.role) and
-            self.user.role != "Commercial"):
+                self.user.role != "Commercial"):
             return
 
         while True:
@@ -246,7 +303,7 @@ class ContractManager:
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
                 return
-        
+
         with self.db_manager.session_scope() as session:
             client = ClientManager.get_client(session, warning=True)
             if not client:
@@ -266,7 +323,7 @@ class ContractManager:
             session.commit()
             self.display_contract(contract.id, SuccessMessage.create_success)
 
-    def update_contract(self, contract_id = None):
+    def update_contract(self, contract_id=None):
         """
         Met à jour les informations d'un contrat existant.
         Champs modifiables :
@@ -275,22 +332,23 @@ class ContractManager:
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.contract_management(self.user.role):
             return
-        
+
         with self.db_manager.session_scope() as session:
             if not contract_id:
                 contract = ContractManager.get_contract(session)
                 if not contract:
                     return
             else:
-                contract = session.query(Contrat).filter_by(id=contract_id).first()
+                contract = session.query(Contrat).filter_by(
+                    id=contract_id).first()
 
             if str(contract.client.commercial.id) != str(self.user.id):
                 ErrorMessage.contract_not_assigned_to_user(edit=True)
                 return
-                
+
             choices = [
                 "Montant total",
                 "Montant restant dû",
@@ -310,7 +368,8 @@ class ContractManager:
                     case "Montant total":
                         message = self.update_montant_total(session, contract)
                     case "Montant restant dû":
-                        message = self.update_montant_restant(session, contract)
+                        message = self.update_montant_restant(
+                            session, contract)
                     case "Retour":
                         break
                     case _:
@@ -337,11 +396,12 @@ class ContractManager:
                     ErrorMessage.invalid_amount()
                     continue
                 contract.montant_total = montant_total
-                contract.montant_restant -= current_montant_total - montant_total
+                subtotal = current_montant_total - montant_total
+                contract.montant_restant -= subtotal
                 message = SuccessMessage.update_success
                 self.db_manager.update_commit(contract, session)
             return message
-        
+
     def update_montant_restant(self, session, contract: Contrat):
         """
         Met à jour le montant restant dû d'un contrat.
@@ -385,11 +445,13 @@ class ContractManager:
                 if not client:
                     return
                 if contract.client != client:
-                    ErrorMessage.contract_client_mismatch(contract.id, client.nom_complet)
+                    ErrorMessage.contract_client_mismatch(
+                        contract.id, client.nom_complet)
                     return
             else:
-                contract = session.query(Contrat).filter_by(id=contract_id).first()
-                
+                contract = session.query(Contrat).filter_by(
+                    id=contract_id).first()
+
             if contract.statut_signe:
                 ErrorMessage.contract_already_signed(contract.id)
                 return
@@ -400,14 +462,13 @@ class ContractManager:
             session.commit()
             self.display_contract(contract.id, SuccessMessage.sign_success)
 
-
     def delete_contract(self, contract_id=None):
         """
         Supprime un contrat.
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         with self.db_manager.session_scope() as session:
             if not contract_id:
                 contract = ContractManager.get_contract(session)
@@ -417,11 +478,13 @@ class ContractManager:
                 if not client:
                     return
                 if contract.client != client:
-                    ErrorMessage.contract_client_mismatch(contract.id, client.nom_complet)
+                    ErrorMessage.contract_client_mismatch(
+                        contract.id, client.nom_complet)
                     return
             else:
-                contract = session.query(Contrat).filter_by(id=contract_id).first()
-            
+                contract = session.query(Contrat).filter_by(
+                    id=contract_id).first()
+
             if not Utils.confirm_deletion():
                 return
 

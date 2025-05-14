@@ -36,18 +36,18 @@ class ClientManager:
         print(
             f"{'Nom complet':<20} "
             f"{TextManager.style(client.nom_complet, 'dim'):<30}"
-            )
+        )
         print(f"{'Email':<20} {TextManager.style(client.email, 'dim'):<30}")
         print(
             f"{'Téléphone':<20} "
             f"{TextManager.style(client.telephone, 'dim'):<30}"
-            )
+        )
         print(
             f"{'Nom de l\'entreprise':<20} "
             f"{TextManager.style(client.nom_entreprise, 'dim'):<30}"
         )
         print("-" * 50)
-    
+
     @staticmethod
     def get_client(session, warning=False) -> Client:
         """
@@ -63,8 +63,8 @@ class ClientManager:
                     ErrorMessage.email_empty()
                     continue
                 client = session.query(Client
-                                        ).filter_by(email=client_email
-                                                    ).first()
+                                       ).filter_by(email=client_email
+                                                   ).first()
                 if not client:
                     ErrorMessage.data_not_found(
                         "Client", client_email)
@@ -94,7 +94,7 @@ class ClientManager:
 
             if not Permission.client_management(self.user.role):
                 return
-            
+
             if str(client.commercial.id) != str(self.user.id):
                 return
 
@@ -147,7 +147,7 @@ class ClientManager:
                 TextManager.style(
                     TextManager.color(
                         "Liste des clients".center(width), "blue"
-                        ),
+                    ),
                     "bold"
                 )
             )
@@ -158,7 +158,7 @@ class ClientManager:
                 print(
                     f"{TextManager.style(
                         client.nom_complet.ljust(20), 'dim'
-                        )} | "
+                    )} | "
                     f"{TextManager.style(client.email.ljust(30), 'dim')}"
                 )
             print("-" * width)
@@ -193,7 +193,7 @@ class ClientManager:
                 telephone = input("Téléphone (Facultatif) : ").strip()
                 nom_entreprise = input(
                     "Nom de l'entreprise (Facultatif): "
-                    ).strip()
+                ).strip()
                 break
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
@@ -236,7 +236,7 @@ class ClientManager:
                     return
             else:
                 client = session.query(Client).filter_by(id=client_id).first()
-            
+
             if str(client.commercial.id) != str(self.user.id):
                 ErrorMessage.client_not_assigned_to_user(edit=True)
                 return
@@ -292,7 +292,7 @@ class ClientManager:
         message = None
         while True:
             nom_complet = Utils.get_input(
-                "Nom complet :",client.nom_complet)
+                "Nom complet :", client.nom_complet)
             if client.nom_complet != nom_complet:
                 if not nom_complet:
                     ErrorMessage.client_name_empty()
@@ -301,7 +301,7 @@ class ClientManager:
                 message = SuccessMessage.update_success
                 self.db_manager.update_commit(client, session)
             return message
-        
+
     def update_email(self, session, client: Client) -> str:
         """
         Met à jour l'email d'un client.
@@ -318,18 +318,18 @@ class ClientManager:
                     ErrorMessage.invalid_email()
                     continue
                 query = session.query(Client
-                                    ).filter_by(email=email
-                                                ).first()
+                                      ).filter_by(email=email
+                                                  ).first()
                 if query:
                     ErrorMessage.client_email_already_exists(
                         email
-                        )
+                    )
                     continue
                 client.email = email
                 message = SuccessMessage.update_success
                 self.db_manager.update_commit(client, session)
             return message
-        
+
     def update_telephone(self, session, client: Client) -> str:
         """
         Met à jour le numéro de téléphone d'un client.
@@ -342,7 +342,7 @@ class ClientManager:
             message = SuccessMessage.update_success
             self.db_manager.update_commit(client, session)
         return message
-    
+
     def update_nom_entreprise(self, session, client: Client) -> str:
         """
         Met à jour le nom de l'entreprise d'un client.

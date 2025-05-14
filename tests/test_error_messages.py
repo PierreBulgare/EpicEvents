@@ -60,10 +60,10 @@ def test_client_not_assigned_to_user_delete(mock_text_manager, mock_print):
     mock_print.assert_called_once_with(text)
 
 
-def test_contract_not_assigned_to_user_to_create_event(mock_text_manager, mock_print):
+def test_contract_not_assigned_to_user_to_create_evt(mock_text_manager, mock_print):
     text = "Vous devez être assigné au client lié à ce contrat pour créer un événement."
     mock_text_manager.return_value = text
-    ErrorMessage.contract_not_assigned_to_user_to_create_event()
+    ErrorMessage.contract_not_assigned_to_user_to_create_evt()
     mock_text_manager.assert_called_once_with(text, "red")
     mock_print.assert_called_once_with(text)
 

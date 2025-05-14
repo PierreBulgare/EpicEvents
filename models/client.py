@@ -19,18 +19,18 @@ class Client(Base):
         UUID(as_uuid=True),
         ForeignKey('collaborateurs.id'),
         nullable=False
-        )
+    )
     commercial = relationship(
         'Collaborateur',
         back_populates='clients',
         foreign_keys=[commercial_id]
-        )
+    )
 
     contrats = relationship(
         'Contrat',
         back_populates='client',
         foreign_keys='Contrat.client_id'
-        )
-    
+    )
+
     def __str__(self):
         return self.nom_complet

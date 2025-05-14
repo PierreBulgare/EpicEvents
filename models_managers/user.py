@@ -67,7 +67,7 @@ class UserManager:
                         break
 
                     collab = session.query(Collaborateur
-                                            ).filter_by(nom=nom).first()
+                                           ).filter_by(nom=nom).first()
                     if collab:
                         ErrorMessage.collab_already_exists(nom)
                         continue
@@ -77,19 +77,19 @@ class UserManager:
                 roles = session.query(Role).all()
                 role_choices = [role.nom for role in roles]
                 role_choices.append("Annuler")
-                
+
                 while True:
                     role_name = Utils.get_questionnary(role_choices)
                     if role_name == "Annuler":
                         WarningMessage.action_cancelled()
                         return
-                    
+
                     role = session.query(Role).filter_by(nom=role_name).first()
-                    
+
                     if not role:
                         ErrorMessage.data_not_found("Rôle", role_name)
                         continue
-                    
+
                     break
 
                 # Mot de passe
@@ -104,7 +104,9 @@ class UserManager:
                     break
 
                 # Email
-                email = f"{slugify.slugify(prenom)}.{slugify.slugify(nom_de_famille)}" + "@epicevents.com"
+                email = f"{
+                    slugify.slugify(prenom)}.{
+                    slugify.slugify(nom_de_famille)}" + "@epicevents.com"
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
                 return

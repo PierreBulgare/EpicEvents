@@ -20,25 +20,25 @@ class Contrat(Base):
         'Client',
         back_populates='contrats',
         foreign_keys=[client_id]
-        )
+    )
 
     gestionnaire_id = Column(
         UUID(as_uuid=True),
         ForeignKey('collaborateurs.id'),
         nullable=False
-        )
+    )
     gestionnaire = relationship(
         'Collaborateur',
         back_populates='contrats',
         foreign_keys=[gestionnaire_id]
-        )
+    )
 
     evenement = relationship(
         'Evenement',
         back_populates='contrat',
         uselist=False,
         foreign_keys='Evenement.contrat_id'
-        )
+    )
 
     def __str__(self):
         return str(self.id)

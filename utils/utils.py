@@ -60,19 +60,19 @@ class Utils:
         else:
             question = "Que voulez-vous faire ?"
         return questionary.select(
-                question,
-                choices=choices,
-                use_shortcuts=True,
-                instruction=" ",
-            ).ask()
-    
+            question,
+            choices=choices,
+            use_shortcuts=True,
+            instruction=" ",
+        ).ask()
+
     @staticmethod
     def get_input(field, default=""):
         return questionary.text(
-                field,
-                default=default,
-            ).ask()
-    
+            field,
+            default=default,
+        ).ask()
+
     @classmethod
     def confirm_deletion(cls):
         while True:
@@ -86,7 +86,6 @@ class Utils:
                 case _:
                     ErrorMessage.action_not_recognized()
 
-    
     @staticmethod
     def email_is_valid(email: str) -> bool:
         if "@" not in email:
@@ -96,7 +95,7 @@ class Utils:
         if email.endswith("."):
             return False
         return True
-    
+
     @staticmethod
     def date_is_valid(date):
         try:
@@ -104,23 +103,25 @@ class Utils:
             return True
         except ValueError:
             return False
-    
+
     @staticmethod
     def display_menu_title(title):
         print(TextManager.style(
-                TextManager.color(title, "magenta"),
-                "bold"))
-        
+            TextManager.color(title, "magenta"),
+            "bold"))
+
     @staticmethod
     def generate_password(length=8):
         """
         Génère un mot de passe aléatoire.
         """
         while True:
-            characters = string.ascii_letters + string.digits + string.punctuation
+            characters = (
+                string.ascii_letters + string.digits + string.punctuation
+            )
             password = ''.join(random.sample(characters, length))
-            
+
             if (any(c.isalpha() for c in password) and
-            any(c.isdigit() for c in password) and
-            any(c in string.punctuation for c in password)):
+                any(c.isdigit() for c in password) and
+                    any(c in string.punctuation for c in password)):
                 return password

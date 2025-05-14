@@ -69,22 +69,20 @@ class ErrorMessage():
         )
 
     @classmethod
-    def contract_not_assigned_to_user_to_create_event(cls):
+    def contract_not_assigned_to_user_to_create_evt(cls):
         print(
             TextManager.color(
-                f"Vous devez être assigné au client lié à ce contrat pour créer un événement.",
-                cls.color
-            )
-        )
+                "Vous devez être assigné au client lié "
+                "à ce contrat pour créer un événement.",
+                cls.color))
 
     @classmethod
     def contract_not_signed_for_event(cls):
         print(
             TextManager.color(
-                f"Le contrat n'est pas signé, vous ne pouvez pas encore créer d'évènement.",
-                cls.color
-            )
-        )
+                "Le contrat n'est pas signé, "
+                "vous ne pouvez pas encore créer d'évènement.",
+                cls.color))
 
     @classmethod
     def username_empty(cls):
@@ -166,7 +164,6 @@ class ErrorMessage():
                 cls.color
             )
         )
-
 
     @classmethod
     def data_not_found(cls, data_type, data_value):
@@ -254,7 +251,8 @@ class ErrorMessage():
     def invalid_role(cls):
         print(
             TextManager.color(
-                f"Rôle invalide. Veuillez choisir parmi : {', '.join(ROLES)}",
+                "Rôle invalide. "
+                f"Veuillez choisir parmi : {', '.join(ROLES)}",
                 cls.color
             )
         )
@@ -272,10 +270,10 @@ class ErrorMessage():
     def contract_already_linked(cls, event):
         print(
             TextManager.color(
-                f"Ce contrat est déjà lié à l'événement {event.nom} ({event.id}).",
-                cls.color
-            )
-        )
+                f"Ce contrat est déjà lié à l'événement {
+                    event.nom} ({
+                    event.id}).",
+                cls.color))
 
     @classmethod
     def invalid_id(cls):
@@ -309,10 +307,9 @@ class ErrorMessage():
     def collab_role_mismatch(cls, name, role_name):
         print(
             TextManager.color(
-                f"Le collaborateur {name} ne fait pas partie du département '{role_name}'.",
-                cls.color
-            )
-        )
+                f"Le collaborateur {name} ne fait pas partie du département "
+                f"'{role_name}'.",
+                cls.color))
 
     @classmethod
     def event_name_empty(cls):
@@ -382,43 +379,39 @@ class ErrorMessage():
     def end_date_before_start_date(cls):
         print(
             TextManager.color(
-                "La date de fin ne peut pas être antérieure à la date de début.",
-                cls.color
-            )
-        )
+                "La date de fin ne peut pas "
+                "être antérieure à la date de début.",
+                cls.color))
 
     @classmethod
     def end_date_before_today(cls):
         print(
             TextManager.color(
-                "La date de fin ne peut pas être antérieure à la date actuelle.",
-                cls.color
-            )
-        )
+                "La date de fin ne peut pas "
+                "être antérieure à la date actuelle.",
+                cls.color))
 
     @classmethod
     def start_date_before_today(cls):
         print(
             TextManager.color(
-                "La date de début ne peut pas être antérieure à la date actuelle.",
-                cls.color
-            )
-        )
+                "La date de début ne peut pas "
+                "être antérieure à la date actuelle.",
+                cls.color))
 
     @classmethod
     def start_date_after_end_date(cls):
         print(
             TextManager.color(
-                "La date de début ne peut pas être postérieure à la date de fin.",
-                cls.color
-            )
-        )
+                "La date de début ne peut pas "
+                "être postérieure à la date de fin.",
+                cls.color))
 
     @classmethod
     def invalid_amount(cls):
         print(
             TextManager.color(
-                f"Le montant est invalide.",
+                "Le montant est invalide.",
                 cls.color
             )
         )
@@ -427,7 +420,7 @@ class ErrorMessage():
     def amount_negative(cls):
         print(
             TextManager.color(
-                f"Le montant ne peut pas être négatif.",
+                "Le montant ne peut pas être négatif.",
                 cls.color
             )
         )
@@ -436,7 +429,7 @@ class ErrorMessage():
     def invalid_attendees_number(cls):
         print(
             TextManager.color(
-                f"Le nombre de participants est invalide.",
+                "Le nombre de participants est invalide.",
                 cls.color
             )
         )
@@ -445,8 +438,8 @@ class ErrorMessage():
     def remaining_gt_total(cls):
         print(
             TextManager.color(
-                f"Le montant restant dû ne peut pas être supérieur "
-                f"au montant total.",
+                "Le montant restant dû ne peut pas être supérieur "
+                "au montant total.",
                 cls.color
             )
         )

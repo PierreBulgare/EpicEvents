@@ -4,6 +4,7 @@ from messages_managers.error import ErrorMessage
 from messages_managers.success import SuccessMessage
 from app.settings import ROLES
 
+
 class RoleManager:
     @staticmethod
     def create_role(db_manager: DatabaseManager):
@@ -11,7 +12,7 @@ class RoleManager:
 
         if not db_manager.check_table_exists(Role.__tablename__):
             return
-        
+
         while role_name not in ROLES:
             print("Choisissez un rôle parmi les suivants : ")
             for role in ROLES:

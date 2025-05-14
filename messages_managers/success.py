@@ -44,7 +44,7 @@ class SuccessMessage():
     def event_note_success(cls):
         print(
             TextManager.color(
-                f"Note ajoutée avec succès !",
+                "Note ajoutée avec succès !",
                 cls.color
             )
         )

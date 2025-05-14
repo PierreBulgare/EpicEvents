@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, inspect
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -12,7 +12,7 @@ class Role(Base):
         'Collaborateur',
         back_populates='role',
         foreign_keys='Collaborateur.role_id'
-        )
-    
+    )
+
     def __str__(self):
         return self.nom

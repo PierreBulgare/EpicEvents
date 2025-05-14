@@ -14,7 +14,7 @@ from .permission import Permission
 
 
 class MenuManager:
-    def __init__(self, db_manager: DatabaseManager, user: UserManager=None):
+    def __init__(self, db_manager: DatabaseManager, user: UserManager = None):
         self.user = user
         self.db_manager = db_manager
         self.collab_manager = CollaborateurManager(db_manager, user)
@@ -29,7 +29,7 @@ class MenuManager:
             "🔑 Se connecter",
             "📝 Créer un compte",
             "❌ Quitter l'application"
-            ]
+        ]
 
         if not JWTManager.token_exist():
             while True:
@@ -74,7 +74,7 @@ class MenuManager:
         while True:
             if not JWTManager.token_exist():
                 break
-            
+
             Utils.new_screen(self.user)
             Utils.display_menu_title("Menu principal")
             action = Utils.get_questionnary(choices)
@@ -105,7 +105,7 @@ class MenuManager:
 
         if not Permission.collab_management(self.user.role):
             return
-        
+
         choices = [
             "👤 Afficher la liste des collaborateurs",
             "👤 Afficher un collaborateur",

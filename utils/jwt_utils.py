@@ -18,9 +18,12 @@ class JWTManager:
             "user_id": str(user_id),
             "user_name": user_name,
             "user_role": user_role,
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=expire_minutes),
-            "iat": datetime.now(timezone.utc)
-        }
+            "exp": datetime.now(
+                timezone.utc) +
+            timedelta(
+                minutes=expire_minutes),
+            "iat": datetime.now(
+                timezone.utc)}
 
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
 
@@ -85,9 +88,9 @@ class JWTManager:
         if not cls.token_exist():
             ErrorMessage.token_not_found()
             return False
-        
+
         if user.payload is None:
             ErrorMessage.invalid_token()
             return False
-        
+
         return True

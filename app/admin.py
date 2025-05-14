@@ -1,10 +1,3 @@
-import sys
-import os
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    )
-
 from models_managers.database import DatabaseManager
 from utils.auth import AuthManager
 from utils.utils import Utils

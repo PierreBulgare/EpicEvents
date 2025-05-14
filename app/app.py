@@ -1,15 +1,8 @@
-import sys
-import os
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    )
-
 from utils.menu import MenuManager
 from utils.utils import Utils
 from models_managers.database import DatabaseManager
 from models_managers.user import UserManager
-from messages_managers.text  import TextManager
+from messages_managers.text import TextManager
 
 
 def run():

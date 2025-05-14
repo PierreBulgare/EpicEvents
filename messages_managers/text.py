@@ -37,7 +37,7 @@ class TextManager:
     @classmethod
     def color(cls, text, color):
         return f"{cls.color_map.get(color, Fore.WHITE)}{text}"
-    
+
     @classmethod
     def background(cls, text, color):
         return f"{cls.background_map.get(color, Back.RESET)}{text}"

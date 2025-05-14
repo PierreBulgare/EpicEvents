@@ -1,6 +1,6 @@
 from datetime import datetime
 import questionary
-from models import Evenement, Client, Collaborateur, Contrat
+from models import Evenement, Collaborateur
 from utils.jwt_utils import JWTManager
 from utils.utils import Utils
 from utils.auth import AuthManager
@@ -52,11 +52,13 @@ class EventManager:
         )
         print(
             f"{'Date de début':<30} "
-            f"{TextManager.style(event.date_debut.strftime('%d-%m-%Y'), 'dim'):<30}"
+            f"{TextManager.style(
+                event.date_debut.strftime('%d-%m-%Y'), 'dim'):<30}"
         )
         print(
             f"{'Date de fin':<30} "
-            f"{TextManager.style(event.date_fin.strftime('%d-%m-%Y'), 'dim'):<30}"
+            f"{TextManager.style(
+                event.date_fin.strftime('%d-%m-%Y'), 'dim'):<30}"
         )
         print(f"{'Lieu':<30} {TextManager.style(event.lieu, 'dim'):<30}")
         print(
@@ -80,11 +82,13 @@ class EventManager:
         )
         print(
             f"{'Date de création':<30} "
-            f"{TextManager.style(event.date_creation.strftime('%d-%m-%Y %H:%M'), 'dim'):<30}"
+            f"{TextManager.style(
+                event.date_creation.strftime('%d-%m-%Y %H:%M'), 'dim'):<30}"
         )
         print(
             f"{'Dernière mise à jour':<30} "
-            f"{TextManager.style(event.derniere_maj.strftime('%d-%m-%Y %H:%M'), 'dim'):<30}"
+            f"{TextManager.style(
+                event.derniere_maj.strftime('%d-%m-%Y %H:%M'), 'dim'):<30}"
         )
         print("-" * width)
 
@@ -151,9 +155,9 @@ class EventManager:
                 success_message()
 
             choices = ["🔙 Retour"] + QUIT_APP_CHOICES
-            
+
             i = 0
-            
+
             if Permission.update_event(self.user.role):
                 choices.insert(i, "✏️  Modifier")
                 i += 1
@@ -173,7 +177,7 @@ class EventManager:
 
                 match action:
                     case "🔧 Assigner":
-                        self.assign_event(event.id) 
+                        self.assign_event(event.id)
                     case "✏️  Modifier":
                         self.update_event(event.id)
                         break
@@ -198,7 +202,7 @@ class EventManager:
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if self.user.role != "Support":
             self.display_all_events()
             return
@@ -279,9 +283,11 @@ class EventManager:
                 date_fin = TextManager.style(
                     event.date_fin.strftime("%d-%m-%Y").ljust(20), "dim"
                 )
-                print(f"{id_str:36} | {nom} | {client} | {date_debut} | {date_fin}")
+                print(
+                    f"{id_str:36} | {nom} | "
+                    f"{client} | {date_debut} | {date_fin}")
             print("-" * width)
-        
+
     def create_event(self):
         """
         Crée un nouvel évènement.
@@ -297,10 +303,9 @@ class EventManager:
 
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.create_event(self.user.role):
             return
-                
 
         with self.db_manager.session_scope() as session:
             while True:
@@ -308,14 +313,14 @@ class EventManager:
                 if not contract:
                     return
                 if str(contract.client.commercial.id) != str(self.user.id):
-                    ErrorMessage.contract_not_assigned_to_user_to_create_event()
+                    ErrorMessage.contract_not_assigned_to_user_to_create_evt()
                     continue
                 if not contract.statut_signe:
                     ErrorMessage.contract_not_signed_for_event()
                     continue
                 existing_event = session.query(Evenement
-                                            ).filter_by(contrat=contract
-                                                        ).first()
+                                               ).filter_by(contrat=contract
+                                                           ).first()
                 if existing_event:
                     ErrorMessage.contract_already_linked(existing_event)
                     continue
@@ -328,7 +333,7 @@ class EventManager:
                     ErrorMessage.contract_client_mismatch()
                     return
                 break
-            
+
             try:
                 while True:
                     nom = input("Nom de l'évènement : ").strip()
@@ -408,7 +413,7 @@ class EventManager:
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.assign_event(self.user.role):
             return
 
@@ -441,11 +446,13 @@ class EventManager:
 
             while True:
                 try:
-                    support = CollaborateurManager.get_collaborateur(session, warning=True)
+                    support = CollaborateurManager.get_collaborateur(
+                        session, warning=True)
                     if not support:
                         return
                     if support.role.nom != "Support":
-                        ErrorMessage.collab_role_mismatch(support.nom, "Support")
+                        ErrorMessage.collab_role_mismatch(
+                            support.nom, "Support")
                         continue
                     break
                 except KeyboardInterrupt:
@@ -454,7 +461,9 @@ class EventManager:
 
             event.support = support
             session.commit()
-            self.display_event(event.id, lambda: SuccessMessage.assign_success(event, support))
+            self.display_event(
+                event.id, lambda: SuccessMessage.assign_success(
+                    event, support))
 
     def add_note(self, event_id=None):
         """
@@ -462,7 +471,7 @@ class EventManager:
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.update_event(self.user.role):
             return
 
@@ -503,7 +512,7 @@ class EventManager:
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.update_event(self.user.role):
             return
 
@@ -525,7 +534,7 @@ class EventManager:
                 "Tout modifier",
                 "Retour"
             ]
-            
+
             message = None
 
             while True:
@@ -545,7 +554,8 @@ class EventManager:
                     case "Lieu":
                         message = self.update_lieu(session, event)
                     case "Nombre de participants":
-                        message = self.update_nombre_participants(session, event)
+                        message = self.update_nombre_participants(
+                            session, event)
                     case "Tout modifier":
                         messages = [
                             self.update_nom(session, event),
@@ -580,7 +590,7 @@ class EventManager:
                 event.derniere_maj = datetime.now()
                 self.db_manager.update_commit(event, session)
             return message
-        
+
     def update_date_debut(self, session, event):
         """
         Met à jour la date de début d'un évènement.
@@ -610,7 +620,7 @@ class EventManager:
                 event.derniere_maj = datetime.now()
                 self.db_manager.update_commit(event, session)
             return message
-        
+
     def update_date_fin(self, session, event):
         """
         Met à jour la date de fin d'un évènement.
@@ -637,7 +647,7 @@ class EventManager:
                 event.derniere_maj = datetime.now()
                 self.db_manager.update_commit(event, session)
             return message
-        
+
     def update_lieu(self, session, event):
         """
         Met à jour le lieu d'un évènement.
@@ -654,7 +664,7 @@ class EventManager:
                 event.derniere_maj = datetime.now()
                 self.db_manager.update_commit(event, session)
             return message
-        
+
     def update_nombre_participants(self, session, event):
         """
         Met à jour le nombre de participants d'un évènement.
@@ -689,7 +699,7 @@ class EventManager:
         """
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.delete_event(self.user.role):
             return
 

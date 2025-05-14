@@ -27,7 +27,7 @@ class CollaborateurManager:
             TextManager.style(
                 TextManager.color(
                     "Informations du collaborateur".center(width), "blue"
-                    ),
+                ),
                 "bold"
             )
         )
@@ -46,7 +46,6 @@ class CollaborateurManager:
         )
         print("-" * width)
 
-
     @staticmethod
     def get_collaborateur(session, warning=False):
         if warning:
@@ -62,8 +61,8 @@ class CollaborateurManager:
                     ErrorMessage.invalid_email()
                     continue
                 collab = session.query(Collaborateur
-                                        ).filter_by(email=email
-                                                    ).first()
+                                       ).filter_by(email=email
+                                                   ).first()
                 if not collab:
                     ErrorMessage.data_not_found("Collaborateur", email)
                     continue
@@ -71,14 +70,14 @@ class CollaborateurManager:
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
                 return
-            
+
     def display_collab(self, collab_id=None, success_message=None):
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.collab_management(self.user.role):
             return
-        
+
         with self.db_manager.session_scope() as session:
             if not collab_id:
                 collab = self.get_collaborateur(session, warning=True)
@@ -87,7 +86,7 @@ class CollaborateurManager:
             else:
                 collab = session.query(Collaborateur
                                        ).filter_by(id=collab_id).first()
-                
+
             self.display_collab_data(collab)
 
             if success_message:
@@ -121,12 +120,12 @@ class CollaborateurManager:
     def create_collab(self):
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.collab_management(self.user.role):
             return
-        
+
         WarningMessage.cancel_command_info()
-        
+
         with self.db_manager.session_scope() as session:
             try:
                 while True:
@@ -148,7 +147,7 @@ class CollaborateurManager:
                         break
 
                     collab = session.query(Collaborateur
-                                        ).filter_by(nom=nom).first()
+                                           ).filter_by(nom=nom).first()
                     if collab:
                         ErrorMessage.collab_already_exists(nom)
                         continue
@@ -158,33 +157,35 @@ class CollaborateurManager:
                 roles = session.query(Role).all()
                 role_choices = [role.nom for role in roles]
                 role_choices.append("Annuler")
-                
+
                 while True:
                     role_name = Utils.get_questionnary(role_choices)
                     if role_name == "Annuler":
                         WarningMessage.action_cancelled()
                         return
-                    
+
                     role = session.query(Role).filter_by(nom=role_name).first()
-                    
+
                     if not role:
                         ErrorMessage.data_not_found("Rôle", role_name)
                         continue
-                    
+
                     break
 
                 # Email
-                email = f"{slugify.slugify(prenom)}.{slugify.slugify(nom_de_famille)}" + "@epicevents.com"
+                email = f"{
+                    slugify.slugify(prenom)}.{
+                    slugify.slugify(nom_de_famille)}" + "@epicevents.com"
 
                 # Mot de passe
                 password = Utils.generate_password()
-                # Sauvegarde du mot de passe généré dans un fichier fake-passwords
+                # Sauvegarde du mot de passe généré dans un fichier
+                # fake-passwords
                 with open(f"./fake-passwords/{email}.txt", "a") as file:
                     file.write(password)
             except KeyboardInterrupt:
                 WarningMessage.action_cancelled()
                 return
-            
 
             # Création du collaborateur
             new_collab = Collaborateur(
@@ -193,7 +194,7 @@ class CollaborateurManager:
                 password_hash=PasswordSecurity.hash(password),
                 role=role,
             )
-            
+
             session.add(new_collab)
             session.commit()
 
@@ -202,10 +203,10 @@ class CollaborateurManager:
     def delete_collab(self, collab_id=None):
         if not JWTManager.token_valid(self.user):
             return
-        
+
         if not Permission.collab_management(self.user.role):
             return
-        
+
         with self.db_manager.session_scope() as session:
             if not collab_id:
                 collab = self.get_collaborateur(session, warning=True)
@@ -217,7 +218,7 @@ class CollaborateurManager:
 
             if not Utils.confirm_deletion():
                 return
-            
+
             session.delete(collab)
             session.commit()
             Utils.new_screen(self.user)

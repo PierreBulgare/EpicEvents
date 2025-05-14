@@ -2,6 +2,7 @@ import sys
 import subprocess
 import os
 
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python run.py [app|admin]")
@@ -12,14 +13,15 @@ def main():
 
     try:
         if command == "app":
-            subprocess.run([sys.executable, "app/app.py"], cwd=root_dir)
+            subprocess.run([sys.executable, "-m", "app.app"], cwd=root_dir)
         elif command == "admin":
-            subprocess.run([sys.executable, "app/admin.py"], cwd=root_dir)
+            subprocess.run([sys.executable, "-m", "app.admin"], cwd=root_dir)
         else:
             print("Invalid argument. Use 'app' or 'admin'.")
             sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:

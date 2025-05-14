@@ -18,7 +18,7 @@ class AuthManager:
 
         with db_manager.session_scope() as session:
             try:
-            # Email
+                # Email
                 while True:
                     email = input("Email : ")
                     if not email:
@@ -29,8 +29,8 @@ class AuthManager:
                         continue
                     try:
                         collaborateur = session.query(Collaborateur
-                                                    ).filter_by(email=email
-                                                                ).first()
+                                                      ).filter_by(email=email
+                                                                  ).first()
                         if not collaborateur:
                             ErrorMessage.account_not_found()
                             continue
@@ -52,8 +52,8 @@ class AuthManager:
                 return
 
         if (collaborateur
-            and PasswordSecurity.verify(
-                password, collaborateur.password_hash.encode('utf-8')
+                and PasswordSecurity.verify(
+                    password, collaborateur.password_hash.encode('utf-8')
                 )):
             token = JWTManager.create_token(
                 collaborateur.id,
@@ -71,7 +71,7 @@ class AuthManager:
             try:
                 password = pwinput.pwinput(
                     prompt="Mot de passe (Administrateur): "
-                    )
+                )
                 if not password:
                     ErrorMessage.admin_password_empty()
                     continue

@@ -11,10 +11,14 @@ from utils.utils import Utils
 from messages_managers.text import TextManager
 from datetime import datetime
 
+
 class DatabaseManager:
     def __init__(self):
         self.engine = sqlalchemy.create_engine(DATABASE_URL)
-        self.Session = sessionmaker(bind=self.engine, autoflush=False, expire_on_commit=False)
+        self.Session = sessionmaker(
+            bind=self.engine,
+            autoflush=False,
+            expire_on_commit=False)
 
     def get_engine(self):
         """
@@ -27,7 +31,7 @@ class DatabaseManager:
         Retourne une nouvelle session SQLAlchemy.
         """
         return self.Session()
-    
+
     def close_session(self, session):
         """
         Ferme proprement la session SQLAlchemy.
@@ -43,7 +47,11 @@ class DatabaseManager:
         """
         if confirm:
             choices = ["Confirmer", "Annuler"]
-            print(TextManager.color("ATTENTION : Cette action supprimera toutes les tables de la base de données !", "yellow"))
+            print(
+                TextManager.color(
+                    "ATTENTION : Cette action supprimera"
+                    "toutes les tables de la base de données !",
+                    "yellow"))
             while True:
                 answer = Utils.get_questionnary(choices)
                 match answer:
@@ -54,7 +62,7 @@ class DatabaseManager:
                         return
                     case _:
                         ErrorMessage.action_not_recognized()
-        
+
         Base.metadata.drop_all(self.engine)
         SuccessMessage.tables_dropped()
 
@@ -71,16 +79,21 @@ class DatabaseManager:
         inspector = sqlalchemy.inspect(self.engine)
         for table_name, table in Base.metadata.tables.items():
             if inspector.has_table(table_name):
-                existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
+                existing_columns = [col['name']
+                                    for col in inspector.get_columns(
+                                        table_name)]
                 for column in table.columns:
                     if column.name not in existing_columns:
-                        column_type = column.type.compile(dialect=self.engine.dialect)
-                        sql = f'ALTER TABLE {table_name} ADD COLUMN {column.name} {column_type}'
-                        
+                        column_type = column.type.compile(
+                            dialect=self.engine.dialect)
+                        sql = f'ALTER TABLE {table_name} ADD COLUMN {
+                            column.name} {column_type}'
+
                         with self.engine.begin() as connection:
                             connection.execute(sqlalchemy.text(sql))
-                            SuccessMessage.column_added(table_name, column.name)
-    
+                            SuccessMessage.column_added(
+                                table_name, column.name)
+
     def check_table_exists(self, table_name):
         """
         Vérifie si une table existe dans la base de données.
