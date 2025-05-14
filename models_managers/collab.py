@@ -117,6 +117,34 @@ class CollaborateurManager:
                     case _:
                         ErrorMessage.action_not_recognized()
 
+    def display_all_collabs(self):
+        if not JWTManager.token_valid(self.user):
+            return
+
+        if not Permission.collab_management(self.user.role):
+            return
+
+        with self.db_manager.session_scope() as session:
+            collabs = session.query(Collaborateur).all()
+
+            if not collabs:
+                return
+
+            Utils.new_screen(self.user)
+
+            print(
+                TextManager.style(
+                    TextManager.color(
+                        "Liste des collaborateurs".center(50), "blue"
+                    ),
+                    "bold"
+                )
+            )
+            print("-" * 80)
+            for collab in collabs:
+                print(f"{collab.nom:<30} {collab.email:<30}  {collab.role.nom:<30}")
+            print("-" * 80)
+
     def create_collab(self):
         if not JWTManager.token_valid(self.user):
             return
