@@ -39,7 +39,8 @@ class JWTManager:
         """
         if cls.token_exist():
             with open(TOKEN_PATH, "r") as f:
-                return f.read().strip()
+                token = f.read().strip()
+                return token
         return None
 
     @staticmethod

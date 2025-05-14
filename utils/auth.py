@@ -51,18 +51,18 @@ class AuthManager:
                 WarningMessage.action_cancelled()
                 return
 
-            if (collaborateur
-                and PasswordSecurity.verify(
-                    password, collaborateur.password_hash.encode('utf-8')
-                    )):
-                token = JWTManager.create_token(
-                    collaborateur.id,
-                    collaborateur.nom,
-                    collaborateur.role.nom
-                )
-                JWTManager.save_token(token)
-            else:
-                ErrorMessage.invalid_credentials()
+        if (collaborateur
+            and PasswordSecurity.verify(
+                password, collaborateur.password_hash.encode('utf-8')
+                )):
+            token = JWTManager.create_token(
+                collaborateur.id,
+                collaborateur.nom,
+                collaborateur.role.nom
+            )
+            JWTManager.save_token(token)
+        else:
+            ErrorMessage.invalid_credentials()
 
     @staticmethod
     def login_admin():

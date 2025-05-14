@@ -29,28 +29,32 @@ class DatabaseManager:
         return self.Session()
     
     def close_session(self, session):
+        """
+        Ferme proprement la session SQLAlchemy.
+        """
         try:
             session.close()
         except SQLAlchemyError as e:
             ErrorMessage.session_close_error(e)
 
-    def drop_all(self):
+    def drop_all(self, confirm=True):
         """
         Supprime toutes les tables de la base de données.
         """
-        choices = ["Confirmer", "Annuler"]
-        print(TextManager.color("ATTENTION : Cette action supprimera toutes les tables de la base de données !", "yellow"))
-        while True:
-            answer = Utils.get_questionnary(choices)
-            match answer:
-                case "Confirmer":
-                    break
-                case "Annuler":
-                    WarningMessage.action_cancelled()
-                    return
-                case _:
-                    ErrorMessage.action_not_recognized()
-    
+        if confirm:
+            choices = ["Confirmer", "Annuler"]
+            print(TextManager.color("ATTENTION : Cette action supprimera toutes les tables de la base de données !", "yellow"))
+            while True:
+                answer = Utils.get_questionnary(choices)
+                match answer:
+                    case "Confirmer":
+                        break
+                    case "Annuler":
+                        WarningMessage.action_cancelled()
+                        return
+                    case _:
+                        ErrorMessage.action_not_recognized()
+        
         Base.metadata.drop_all(self.engine)
         SuccessMessage.tables_dropped()
 
@@ -58,15 +62,15 @@ class DatabaseManager:
         """
         Crée et met à jour toutes les tables de la base de données.
         """
-        inspector = sqlalchemy.inspect(self.engine)
-        existing_tables = inspector.get_table_names()
-        table_updated = 0
+        # Création directe de toutes les tables
+        Base.metadata.create_all(self.engine)
         for table_name, table in Base.metadata.tables.items():
-            if table_name not in existing_tables:
-                Base.metadata.create_all(self.engine, tables=[table])
-                SuccessMessage.table_created(table_name)
-                table_updated += 1
-            else:
+            SuccessMessage.table_created(table_name)
+
+        # Mise à jour des colonnes manquantes
+        inspector = sqlalchemy.inspect(self.engine)
+        for table_name, table in Base.metadata.tables.items():
+            if inspector.has_table(table_name):
                 existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
                 for column in table.columns:
                     if column.name not in existing_columns:
@@ -76,24 +80,20 @@ class DatabaseManager:
                         with self.engine.begin() as connection:
                             connection.execute(sqlalchemy.text(sql))
                             SuccessMessage.column_added(table_name, column.name)
-                            
-                            table_updated += 1
-        if table_updated == 0:
-            WarningMessage.no_table_update()
-
+    
     def check_table_exists(self, table_name):
         """
         Vérifie si une table existe dans la base de données.
         """
         inspector = sqlalchemy.inspect(self.engine)
         exist = inspector.has_table(table_name)
-        if not exist:
-            ErrorMessage.table_not_found(table_name)
-            return False
-        return True
+        return exist
 
     @contextmanager
     def session_scope(self):
+        """
+        Contexte sécurisé pour une session SQLAlchemy.
+        """
         session = self.get_session()
         try:
             yield session

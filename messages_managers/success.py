@@ -17,7 +17,7 @@ class SuccessMessage():
     def collab_created(cls, name):
         print(
             TextManager.color(
-                f"Collaborateur {name} effectuée avec succès !",
+                f"Collaborateur {name} créé avec succès !",
                 cls.color
             )
         )

@@ -320,12 +320,14 @@ class EventManager:
                     ErrorMessage.contract_already_linked(existing_event)
                     continue
                 break
-            client = ClientManager.get_client(session)
-            if not client:
-                return
-            if contract.client != client:
-                ErrorMessage.contract_client_mismatch()
-                return
+            while True:
+                client = ClientManager.get_client(session)
+                if not client:
+                    return
+                if contract.client != client:
+                    ErrorMessage.contract_client_mismatch()
+                    return
+                break
             
             try:
                 while True:

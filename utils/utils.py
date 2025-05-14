@@ -79,18 +79,21 @@ class Utils:
             confirmation = cls.get_questionnary(delete=True)
             match confirmation:
                 case "Confirmer":
-                    break
+                    return True
                 case "Annuler":
                     WarningMessage.action_cancelled()
                     return False
                 case _:
                     ErrorMessage.action_not_recognized()
-        return True
 
     
     @staticmethod
-    def email_is_valid(email):
-        if "@" not in email or "." not in email.split("@")[-1]:
+    def email_is_valid(email: str) -> bool:
+        if "@" not in email:
+            return False
+        if "." not in email.split("@")[-1]:
+            return False
+        if email.endswith("."):
             return False
         return True
     
@@ -113,6 +116,11 @@ class Utils:
         """
         Génère un mot de passe aléatoire.
         """
-        characters = string.ascii_letters + string.digits + string.punctuation
-        password = ''.join(random.sample(characters, length))
-        return password
+        while True:
+            characters = string.ascii_letters + string.digits + string.punctuation
+            password = ''.join(random.sample(characters, length))
+            
+            if (any(c.isalpha() for c in password) and
+            any(c.isdigit() for c in password) and
+            any(c in string.punctuation for c in password)):
+                return password

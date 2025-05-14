@@ -209,7 +209,7 @@ class ErrorMessage():
     def account_already_exists(cls):
         print(
             TextManager.color(
-                "Un compte avec cet email existe déjà.",
+                "Un compte existe déjà avec cet email.",
                 cls.color
             )
         )
